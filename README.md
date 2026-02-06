@@ -11,17 +11,6 @@ button { padding:10px 15px; font-size:16px; cursor:pointer; }
 #loading { position:absolute; inset:0; background:black; display:flex; flex-direction:column; justify-content:center; align-items:center; z-index:5; }
 </style>
 
-.touch-btn {
-  width:80px;
-  height:80px;
-  background:rgba(0,150,255,0.35);
-  border:2px solid #4af;
-  border-radius:50%;
-  font-size:30px;
-  color:white;
-  user-select:none;
-}
-
 .fire-btn {
   position:absolute;
   bottom:120px;
