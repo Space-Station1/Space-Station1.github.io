@@ -60,9 +60,6 @@ function movePlayerToTouch(e){
 <script>
 </body>
 </html>
-/* ===== FIRE ON / OFF BUTTON (STANDALONE) ===== */
-
-// 1. Lag knappen automatisk i UI
 const fireBtn = document.createElement("button");
 fireBtn.id = "fireToggleBtn";
 fireBtn.innerText = "Fire: OFF";
