@@ -1,3 +1,4 @@
+<!DOCTYPE html>
 <html lang="no">
 <head>
 <meta charset="UTF-8">
@@ -9,7 +10,6 @@ canvas { background:#05080f; border:2px solid #4af; }
 button { padding:10px 15px; font-size:16px; cursor:pointer; }
 #loading { position:absolute; inset:0; background:black; display:flex; flex-direction:column; justify-content:center; align-items:center; z-index:5; }
 </style>
-
 </head>
 <body>
 
@@ -29,12 +29,6 @@ button { padding:10px 15px; font-size:16px; cursor:pointer; }
 <div id="upgrade">Upgrade cost: 0</div>
 <div id="gems">Gems: 0</div>
 </div>
-<div class="touch-controls">
-  <button class="touch-btn" id="leftBtn">⬅</button>
-  <button class="touch-btn" id="rightBtn">➡</button>
-</div>
-
-<button class="fire-btn" id="fireToggle">FIRE<br>OFF</button>
 
 <canvas id="game" width="400" height="600"></canvas>
 
@@ -42,52 +36,6 @@ button { padding:10px 15px; font-size:16px; cursor:pointer; }
 const canvas = document.getElementById("game");
 const ctx = canvas.getContext("2d");
 const GAME_SPEED = 0.5;
-/* ===== TOUCH & TRIGGER SYSTEM ===== */
-
-let touchLeft = false;
-let touchRight = false;
-let triggerOn = false;
-
-// Buttons
-const leftBtn = document.getElementById("leftBtn");
-const rightBtn = document.getElementById("rightBtn");
-const fireBtn = document.getElementById("fireToggle");
-
-// Touch movement
-function bindTouch(btn, onStart, onEnd){
-  btn.addEventListener("touchstart", e => {
-    e.preventDefault();
-    onStart();
-  });
-  btn.addEventListener("touchend", e => {
-    e.preventDefault();
-    onEnd();
-  });
-}
-
-bindTouch(leftBtn, ()=>touchLeft=true, ()=>touchLeft=false);
-bindTouch(rightBtn, ()=>touchRight=true, ()=>touchRight=false);
-
-// Trigger toggle
-fireBtn.addEventListener("click", ()=>{
-  triggerOn = !triggerOn;
-  fireBtn.innerHTML = triggerOn ? "FIRE<br>ON" : "FIRE<br>OFF";
-});
-
-// Inject touch input into game
-const originalUpdate = update;
-update = function(){
-  if((touchLeft) && player.x > 0) player.x -= player.speed;
-  if((touchRight) && player.x < 365) player.x += player.speed;
-
-  if(hasGun && triggerOn){
-    keys[' '] = true;
-  } else if(!keys[' ']){
-    keys[' '] = false;
-  }
-
-  originalUpdate();
-};
 
 let player, enemies, bullets, explosions, stars;
 let score, gameOver=false, paused=false;
