@@ -1,3 +1,4 @@
+<!DOCTYPE html>
 <html lang="no">
 <head>
 <meta charset="UTF-8">
@@ -11,12 +12,6 @@ button { padding:10px 15px; font-size:16px; cursor:pointer; }
 </style>
 </head>
 <body>
-
-<div id="loading">
-<h1>🚀Space-Station</h1>
-<p>Laster Romstasjon…</p>
-</div>
-
 <div class="ui">
 <button onclick="togglePause()">Pause</button>
 <button onclick="restartGame()">Restart</button>
@@ -36,47 +31,6 @@ const canvas = document.getElementById("game");
 const ctx = canvas.getContext("2d");
 const GAME_SPEED = 0.9;
 
-canvas.addEventListener("touchstart", e => {
-  isTouching = true;
-  movePlayerToTouch(e);
-});
-
-canvas.addEventListener("touchmove", e => {
-  if(isTouching) movePlayerToTouch(e);
-});
-
-canvas.addEventListener("touchend", () => {
-  isTouching = false;
-});
-
-function movePlayerToTouch(e){
-  e.preventDefault();
-
-  const rect = canvas.getBoundingClientRect();
-  const touchX = e.touches[0].clientX - rect.left;
-
-  // Sentrer kuben på fingeren
-  player.x = touchX - player.width / 2;
-
-  // Begrens innenfor banen
-  if(player.x < 0) player.x = 0;
-  if(player.x > canvas.width - player.width)
-    player.x = canvas.width - player.width;
-}
-let autoShoot = false;
-
-canvas.addEventListener("touchstart", e => {
-  autoShoot = true;
-});
-
-canvas.addEventListener("touchend", e => {
-  autoShoot = false;
-});
-
-canvas.addEventListener("touchcancel", () => {
-  autoShoot = false;
-});
-  
 let player, enemies, bullets, explosions, stars;
 let score, gameOver=false, paused=false;
 let keys={};
@@ -94,8 +48,7 @@ let bulletSpeed = 8*GAME_SPEED;
 let shotsPerGroup = [1,1,2,2,3,3]; // antall skudd i gruppen per oppgr
 let cooldownSettings = [30,9,30,9,30,9]; // frames mellom grupper per oppgr
 let shootCooldown = 0; // vent før neste gruppe
-if(hasGun){
-  if(!groupShooting && (keys[' '] || autoShoot) && shootCooldown<=0){
+let groupShooting = false;
 let currentShotIndex = 0;
 
 // UI
