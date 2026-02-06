@@ -91,6 +91,23 @@ let player, enemies, bullets, explosions, stars;
 let score, gameOver=false, paused=false;
 let keys={};
 
+/* ===== SELVSTENDIG AUTO FIRE KNAPP ===== */
+
+let myAutoShoot = false; // unik variabel, påvirker kun denne knappen
+const myAutoFireBtn = document.getElementById("myAutoFireBtn");
+
+myAutoFireBtn.addEventListener("click", () => {
+  myAutoShoot = !myAutoShoot;
+  myAutoFireBtn.innerText = myAutoShoot ? "Auto Fire: ON" : "Auto Fire: OFF";
+  myAutoFireBtn.style.backgroundColor = myAutoShoot ? "#4af" : "#f44";
+});
+
+// Bruk myAutoShoot i spillets update() i stedet for keys[' '] om du vil
+// F.eks i stedet for:
+// if(!groupShooting && keys[' '] && shootCooldown<=0)
+// kan du skrive:
+// if(!groupShooting && myAutoShoot && shootCooldown<=0)
+
 // Lagret data
 let coins = Number(localStorage.getItem("coins")) || 100;
 let upgradeLevel = Number(localStorage.getItem("upgradeLevel")) || 0;
@@ -143,6 +160,8 @@ function restartGame(){ init(); }
 
 // Pause
 function togglePause(){ if(!gameOver) paused=!paused; }
+
+<button id="myAutoFireBtn">Auto Fire: OFF</button>
 
 // Unlock pistol
 function unlockGun(){
