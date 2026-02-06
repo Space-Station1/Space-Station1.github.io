@@ -1,4 +1,3 @@
-<!DOCTYPE html>
 <html lang="no">
 <head>
 <meta charset="UTF-8">
@@ -10,18 +9,6 @@ canvas { background:#05080f; border:2px solid #4af; }
 button { padding:10px 15px; font-size:16px; cursor:pointer; }
 #loading { position:absolute; inset:0; background:black; display:flex; flex-direction:column; justify-content:center; align-items:center; z-index:5; }
 </style>
-
-.fire-btn {
-  position:absolute;
-  bottom:120px;
-  right:20px;
-  width:90px;
-  height:90px;
-  background:rgba(255,80,80,0.4);
-  border:2px solid #f66;
-  border-radius:50%;
-  font-size:20px;
-}
 
 </head>
 <body>
