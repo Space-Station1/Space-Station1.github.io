@@ -10,17 +10,6 @@ canvas { background:#05080f; border:2px solid #4af; }
 button { padding:10px 15px; font-size:16px; cursor:pointer; }
 #loading { position:absolute; inset:0; background:black; display:flex; flex-direction:column; justify-content:center; align-items:center; z-index:5; }
 </style>
-.touch-controls {
-  position:absolute;
-  bottom:20px;
-  left:0;
-  right:0;
-  display:flex;
-  justify-content:space-between;
-  padding:0 20px;
-  z-index:3;
-  pointer-events:auto;
-}
 
 .touch-btn {
   width:80px;
