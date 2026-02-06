@@ -54,6 +54,15 @@ canvas.addEventListener("touchend", () => {
 
 function movePlayerToTouch(e){
   e.preventDefault();
+/* ===== AUTO FIRE BUTTON ===== */
+
+let autoShoot = false;
+const autoFireBtn = document.getElementById("autoFireBtn");
+
+autoFireBtn.addEventListener("click", () => {
+  autoShoot = !autoShoot;
+  autoFireBtn.innerText = autoShoot ? "Auto Fire: ON" : "Auto Fire: OFF";
+});
 
   const rect = canvas.getBoundingClientRect();
   const touchX = e.touches[0].clientX - rect.left;
@@ -66,28 +75,6 @@ function movePlayerToTouch(e){
   if(player.x > canvas.width - player.width)
     player.x = canvas.width - player.width;
 }
-/* ===== AUTO SHOOT (FIXED) ===== */
-
-let autoShoot = false;
-
-canvas.addEventListener("touchstart", e => {
-  e.preventDefault();
-  autoShoot = true;
-}, { passive:false });
-
-canvas.addEventListener("touchmove", e => {
-  e.preventDefault();
-  autoShoot = true;
-}, { passive:false });
-
-canvas.addEventListener("touchend", e => {
-  e.preventDefault();
-  autoShoot = false;
-}, { passive:false });
-
-canvas.addEventListener("touchcancel", () => {
-  autoShoot = false;
-});
 
 let player, enemies, bullets, explosions, stars;
 let score, gameOver=false, paused=false;
@@ -145,6 +132,8 @@ function restartGame(){ init(); }
 
 // Pause
 function togglePause(){ if(!gameOver) paused=!paused; }
+
+  <button id="autoFireBtn">Auto Fire: OFF</button>
 
 // Unlock pistol
 function unlockGun(){
@@ -234,8 +223,8 @@ function update(){
   if((keys['arrowright']||keys['d']) && player.x<365) player.x+=player.speed;
 
   // Skudd-grupper
-  if(hasGun){
-    if(!groupShooting && keys[' '] && shootCooldown<=0){
+if(hasGun){
+  if(!groupShooting && (keys[' '] || autoShoot) && shootCooldown<=0){
       groupShooting=true;
       groupCooldown=cooldownSettings[upgradeLevel];
       currentShotIndex=0;
