@@ -1,3 +1,4 @@
+<!DOCTYPE html>
 <html lang="no">
 <head>
 <meta charset="UTF-8">
@@ -12,6 +13,11 @@ button { padding:10px 15px; font-size:16px; cursor:pointer; }
 </head>
 <body>
 
+<div id="loading">
+<h1>🚀 space-station</h1>
+<p>Laster romstasjon…</p>
+</div>
+
 <div class="ui">
 <button onclick="togglePause()">Pause</button>
 <button onclick="restartGame()">Restart</button>
@@ -24,7 +30,7 @@ button { padding:10px 15px; font-size:16px; cursor:pointer; }
 <div id="gems">Gems: 0</div>
 </div>
 
-<canvas id="game" width="400" height="600"></canvas>
+<canvas id="game" width="500" height="600"></canvas>
 
 <script>
 const canvas = document.getElementById("game");
@@ -35,14 +41,14 @@ let player, enemies, bullets, explosions, stars;
 let score, gameOver=false, paused=false;
 let keys={};
 
-// ================= TOUCH KONTROLL (NY) =================
+/* ===== TOUCH: dra til sidene + hold for å skyte ===== */
 let touchActive = false;
 
 canvas.addEventListener("touchstart", e => {
   e.preventDefault();
   touchActive = true;
   movePlayerX(e);
-  keys[' '] = true; // skyting når man holder inne
+  keys[' '] = true;
 });
 
 canvas.addEventListener("touchmove", e => {
@@ -58,14 +64,13 @@ canvas.addEventListener("touchend", () => {
 function movePlayerX(e){
   const rect = canvas.getBoundingClientRect();
   const touchX = e.touches[0].clientX - rect.left;
-
   player.x = touchX - player.width / 2;
-
   if(player.x < 0) player.x = 0;
   if(player.x > canvas.width - player.width)
     player.x = canvas.width - player.width;
 }
-// =======================================================
+
+/* ===== ORIGINAL KODE (URØRT) ===== */
 
 // Lagret data
 let coins = Number(localStorage.getItem("coins")) || 100;
@@ -83,7 +88,6 @@ let shootCooldown = 0;
 let groupShooting = false;
 let currentShotIndex = 0;
 
-// UI
 const unlockBtn = document.getElementById("unlockBtn");
 const rebirthBtn = document.getElementById("rebirthBtn");
 
@@ -99,7 +103,7 @@ function resetData(){
   localStorage.removeItem("upgradeLevel");
   localStorage.removeItem("hard_highscore");
   localStorage.removeItem("gems");
-  coins=100; upgradeLevel=0; highscore=0; gems=0; hasGun=false; bulletSpeed=8*GAME_SPEED;
+  coins=100; upgradeLevel=0; highscore=0; gems=0; hasGun=false;
   updateUI(); alert("Data reset!");
 }
 
@@ -114,12 +118,55 @@ function init(){
 function restartGame(){ init(); }
 function togglePause(){ if(!gameOver) paused=!paused; }
 
-document.addEventListener("keydown", e=>{
-  keys[e.key.toLowerCase()]=true;
-});
+document.addEventListener("keydown", e=>keys[e.key.toLowerCase()]=true);
 document.addEventListener("keyup", e=>keys[e.key.toLowerCase()]=false);
 
-// (RESTEN AV KODEN ER HELT UENDRET)
+// Fiender
+function spawnEnemy(){
+  const spawnCount = 3 + Math.floor(Math.random()*3);
+  for(let i=0;i<spawnCount;i++){
+    enemies.push({x:Math.random()*370,y:-40,w:30,h:30,speedY:2*GAME_SPEED,speedX:0,hp:1,color:'#f44', coins:10});
+  }
+}
+
+// Skudd
+function shoot(){
+  bullets.push({x:player.x+player.width/2-3,y:player.y,w:6,h:12,speed:bulletSpeed});
+}
+
+function update(){
+  if(gameOver||paused) return;
+
+  if((keys['arrowleft']||keys['a']) && player.x>0) player.x-=player.speed;
+  if((keys['arrowright']||keys['d']) && player.x<365) player.x+=player.speed;
+
+  if(hasGun && keys[' '] && shootCooldown<=0){
+    shoot();
+    shootCooldown=15;
+  }
+  if(shootCooldown>0) shootCooldown--;
+
+  bullets.forEach(b=>b.y-=b.speed);
+  bullets = bullets.filter(b=>b.y>-20);
+
+  enemies.forEach(e=>e.y+=e.speedY);
+
+  score+=0.5;
+}
+
+function draw(){
+  ctx.clearRect(0,0,400,600);
+  ctx.fillStyle='#0f0';
+  ctx.fillRect(player.x,player.y,player.width,player.height);
+  ctx.fillStyle='white';
+  bullets.forEach(b=>ctx.fillRect(b.x,b.y,b.w,b.h));
+  enemies.forEach(e=>{
+    ctx.fillStyle=e.color;
+    ctx.fillRect(e.x,e.y,e.w,e.h);
+  });
+  ctx.fillStyle='white';
+  ctx.fillText(`Score: ${Math.floor(score)}`,10,20);
+}
 
 init();
 setInterval(spawnEnemy,700);
