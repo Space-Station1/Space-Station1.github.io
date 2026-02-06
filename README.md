@@ -58,22 +58,24 @@ function movePlayerToTouch(e){
 <button id="fireBtn">Fire: OFF</button>
 
 <script>
-let fireOn = false;
-
-const fireBtn = document.getElementById("fireBtn");
-
-fireBtn.addEventListener("click", () => {
-  fireOn = !fireOn; // bytter status
-  fireBtn.innerText = fireOn ? "Fire: ON" : "Fire: OFF";
-  fireBtn.classList.toggle("on", fireOn);
-
-  // Demo: logg status
-  console.log("Fire status:", fireOn);
-});
-</script>
-
 </body>
 </html>
+/* ===== FIRE ON / OFF BUTTON (STANDALONE) ===== */
+
+// 1. Lag knappen automatisk i UI
+const fireBtn = document.createElement("button");
+fireBtn.id = "fireToggleBtn";
+fireBtn.innerText = "Fire: OFF";
+document.querySelector(".ui").appendChild(fireBtn);
+
+// 2. Fire-status (denne bruker du i spillet)
+let fireOn = false;
+
+// 3. Toggle-funksjon
+fireBtn.onclick = () => {
+  fireOn = !fireOn;
+  fireBtn.innerText = fireOn ? "Fire: ON" : "Fire: OFF";
+};
   const rect = canvas.getBoundingClientRect();
   const touchX = e.touches[0].clientX - rect.left;
 
