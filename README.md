@@ -56,6 +56,59 @@ canvas.addEventListener("touchend", () => {
 function movePlayerToTouch(e){
   e.preventDefault();
 
+  <!DOCTYPE html>
+<html lang="no">
+<head>
+<meta charset="UTF-8">
+<title>Fire ON/OFF Knapp</title>
+<style>
+  body {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    background-color: #111;
+    color: white;
+    font-family: Arial, sans-serif;
+  }
+
+  button {
+    padding: 20px 40px;
+    font-size: 24px;
+    cursor: pointer;
+    border: none;
+    border-radius: 12px;
+    background-color: #f44;
+    color: white;
+    transition: background 0.3s;
+  }
+
+  button.on {
+    background-color: #4af;
+  }
+</style>
+</head>
+<body>
+
+<button id="fireBtn">Fire: OFF</button>
+
+<script>
+let fireOn = false;
+
+const fireBtn = document.getElementById("fireBtn");
+
+fireBtn.addEventListener("click", () => {
+  fireOn = !fireOn; // bytter status
+  fireBtn.innerText = fireOn ? "Fire: ON" : "Fire: OFF";
+  fireBtn.classList.toggle("on", fireOn);
+
+  // Demo: logg status
+  console.log("Fire status:", fireOn);
+});
+</script>
+
+</body>
+</html>
   const rect = canvas.getBoundingClientRect();
   const touchX = e.touches[0].clientX - rect.left;
 
