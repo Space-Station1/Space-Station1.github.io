@@ -12,6 +12,11 @@ button { padding:10px 15px; font-size:16px; cursor:pointer; }
 </head>
 <body>
 
+<div id="loading">
+<h1>🚀 space-station</h1>
+<p>Laster romstasjon…</p>
+</div>
+
 <div class="ui">
 <button onclick="togglePause()">Pause</button>
 <button onclick="restartGame()">Restart</button>
@@ -30,7 +35,36 @@ button { padding:10px 15px; font-size:16px; cursor:pointer; }
 const canvas = document.getElementById("game");
 const ctx = canvas.getContext("2d");
 const GAME_SPEED = 0.9;
+let isTouching = false;
 
+canvas.addEventListener("touchstart", e => {
+  isTouching = true;
+  movePlayerToTouch(e);
+});
+
+canvas.addEventListener("touchmove", e => {
+  if(isTouching) movePlayerToTouch(e);
+});
+
+canvas.addEventListener("touchend", () => {
+  isTouching = false;
+});
+
+function movePlayerToTouch(e){
+  e.preventDefault();
+
+  const rect = canvas.getBoundingClientRect();
+  const touchX = e.touches[0].clientX - rect.left;
+
+  // Sentrer kuben på fingeren
+  player.x = touchX - player.width / 2;
+
+  // Begrens innenfor banen
+  if(player.x < 0) player.x = 0;
+  if(player.x > canvas.width - player.width)
+    player.x = canvas.width - player.width;
+}
+  
 let player, enemies, bullets, explosions, stars;
 let score, gameOver=false, paused=false;
 let keys={};
