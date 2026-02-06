@@ -191,7 +191,7 @@ function update(){
     player.x=(touchX-rect.left)-player.width/2;
   }
 
-  const firing = triggerOn || keys[' '] || touchShooting;
+  const firing = touchShoot || keys[' '] || triggerOn;
 
   if(hasGun && firing && shootCooldown<=0 && !groupShooting){
     groupShooting=true;
