@@ -97,7 +97,8 @@ let bulletSpeed = 8*GAME_SPEED;
 let shotsPerGroup = [1,1,2,2,3,3]; // antall skudd i gruppen per oppgr
 let cooldownSettings = [30,9,30,9,30,9]; // frames mellom grupper per oppgr
 let shootCooldown = 0; // vent før neste gruppe
-let groupShooting = false;
+if(hasGun){
+  if(!groupShooting && (keys[' '] || autoShoot) && shootCooldown<=0){
 let currentShotIndex = 0;
 
 // UI
