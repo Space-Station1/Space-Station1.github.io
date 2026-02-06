@@ -54,15 +54,6 @@ canvas.addEventListener("touchend", () => {
 
 function movePlayerToTouch(e){
   e.preventDefault();
-/* ===== AUTO FIRE BUTTON ===== */
-
-let autoShoot = false;
-const autoFireBtn = document.getElementById("autoFireBtn");
-
-autoFireBtn.addEventListener("click", () => {
-  autoShoot = !autoShoot;
-  autoFireBtn.innerText = autoShoot ? "Auto Fire: ON" : "Auto Fire: OFF";
-});
 
   const rect = canvas.getBoundingClientRect();
   const touchX = e.touches[0].clientX - rect.left;
