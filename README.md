@@ -64,6 +64,21 @@ function movePlayerToTouch(e){
   if(player.x > canvas.width - player.width)
     player.x = canvas.width - player.width;
 }
+/* ===== AUTO SHOOT ON TOUCH ===== */
+
+let autoShoot = false;
+
+canvas.addEventListener("touchstart", e => {
+  autoShoot = true;
+});
+
+canvas.addEventListener("touchend", e => {
+  autoShoot = false;
+});
+
+canvas.addEventListener("touchcancel", () => {
+  autoShoot = false;
+});
   
 let player, enemies, bullets, explosions, stars;
 let score, gameOver=false, paused=false;
