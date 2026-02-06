@@ -144,7 +144,7 @@ function restartGame(){ init(); }
 // Pause
 function togglePause(){ if(!gameOver) paused=!paused; }
 
-<button id="myAutoFireBtn">Auto Fire: OFF</button>
+<button id="toggleFireBtn" onclick="toggleFire()">Fire: OFF</button>
 
 // Unlock pistol
 function unlockGun(){
