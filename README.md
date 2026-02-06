@@ -1,3 +1,4 @@
+<!DOCTYPE html>
 <html lang="no">
 <head>
 <meta charset="UTF-8">
@@ -124,8 +125,6 @@ function restartGame(){ init(); }
 // Pause
 function togglePause(){ if(!gameOver) paused=!paused; }
 
-  <button id="autoFireBtn">Auto Fire: OFF</button>
-
 // Unlock pistol
 function unlockGun(){
   if(score>=1000 && coins>=100 && !hasGun){
@@ -214,8 +213,8 @@ function update(){
   if((keys['arrowright']||keys['d']) && player.x<365) player.x+=player.speed;
 
   // Skudd-grupper
-if(hasGun){
-  if(!groupShooting && (keys[' '] || autoShoot) && shootCooldown<=0){
+  if(hasGun){
+    if(!groupShooting && keys[' '] && shootCooldown<=0){
       groupShooting=true;
       groupCooldown=cooldownSettings[upgradeLevel];
       currentShotIndex=0;
