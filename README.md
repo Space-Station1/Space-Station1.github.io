@@ -64,8 +64,6 @@ function movePlayerToTouch(e){
   if(player.x > canvas.width - player.width)
     player.x = canvas.width - player.width;
 }
-/* ===== AUTO SHOOT ON TOUCH ===== */
-
 let autoShoot = false;
 
 canvas.addEventListener("touchstart", e => {
