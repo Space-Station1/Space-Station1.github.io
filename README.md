@@ -56,8 +56,7 @@ canvas.addEventListener("touchend", () => {
 function movePlayerToTouch(e){
   e.preventDefault();
 
-  <!DOCTYPE html>
-<html lang="no">
+  <html lang="no">
 <head>
 <meta charset="UTF-8">
 <title>Fire ON/OFF Knapp</title>
