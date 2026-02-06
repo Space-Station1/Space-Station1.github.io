@@ -35,7 +35,6 @@ button { padding:10px 15px; font-size:16px; cursor:pointer; }
 const canvas = document.getElementById("game");
 const ctx = canvas.getContext("2d");
 const GAME_SPEED = 0.9;
-let isTouching = false;
 
 canvas.addEventListener("touchstart", e => {
   isTouching = true;
