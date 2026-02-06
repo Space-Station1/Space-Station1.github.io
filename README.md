@@ -12,6 +12,11 @@ button { padding:10px 15px; font-size:16px; cursor:pointer; }
 </head>
 <body>
 
+<div id="loading">
+<h1>🚀Space-Station</h1>
+<p>Laster Romstasjon…</p>
+</div>
+
 <div class="ui">
 <button onclick="togglePause()">Pause</button>
 <button onclick="restartGame()">Restart</button>
