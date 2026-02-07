@@ -230,7 +230,7 @@ function update(){
 
   // Skudd-grupper
   if(hasGun){
-    if(!groupShooting && keys[' '] && shootCooldown<=0){
+    if(!groupShooting && (keys[' '] || fireOn) && shootCooldown<=0){
       groupShooting=true;
       groupCooldown=cooldownSettings[upgradeLevel];
       currentShotIndex=0;
