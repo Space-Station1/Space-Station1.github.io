@@ -67,7 +67,25 @@ function movePlayerToTouch(e){
   if(player.x > canvas.width - player.width)
     player.x = canvas.width - player.width;
 }
-  
+const ui = document.querySelector(".ui");
+
+const hideBtn = document.createElement("button");
+hideBtn.textContent = "Hide UI";
+ui.prepend(hideBtn);
+
+let uiHidden = false;
+
+hideBtn.onclick = () => {
+  uiHidden = !uiHidden;
+
+  [...ui.children].forEach(el => {
+    if (el !== hideBtn) {
+      el.style.display = uiHidden ? "none" : "";
+    }
+  });
+
+  hideBtn.textContent = uiHidden ? "Show UI" : "Hide UI";
+};  
 let player, enemies, bullets, explosions, stars;
 let score, gameOver=false, paused=false;
 let keys={};
