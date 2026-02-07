@@ -29,7 +29,7 @@ button { padding:10px 15px; font-size:16px; cursor:pointer; }
 <div id="gems">Gems: 0</div>
 </div>
 
-<canvas id="game" width="450" height="600"></canvas>
+<canvas id="game" width="400" height="600"></canvas>
 
 <script>
 const canvas = document.getElementById("game");
