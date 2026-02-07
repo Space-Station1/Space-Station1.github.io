@@ -1,3 +1,4 @@
+<!DOCTYPE html>
 <html lang="no">
 <head>
 <meta charset="UTF-8">
@@ -35,7 +36,8 @@ button { padding:10px 15px; font-size:16px; cursor:pointer; }
 const canvas = document.getElementById("game");
 const ctx = canvas.getContext("2d");
 const GAME_SPEED = 0.9;
-/* ===== TOUCH FOLLOW FINGER ===== */
+
+  /* ===== TOUCH FOLLOW FINGER ===== */
 
 let isTouching = false;
 
@@ -55,24 +57,6 @@ canvas.addEventListener("touchend", () => {
 function movePlayerToTouch(e){
   e.preventDefault();
 
-<button id="fireBtn">Fire: OFF</button>
-
-<script>
-</body>
-</html>
-const fireBtn = document.createElement("button");
-fireBtn.id = "fireToggleBtn";
-fireBtn.innerText = "Fire: OFF";
-document.querySelector(".ui").appendChild(fireBtn);
-
-// 2. Fire-status (denne bruker du i spillet)
-let fireOn = false;
-
-// 3. Toggle-funksjon
-fireBtn.onclick = () => {
-  fireOn = !fireOn;
-  fireBtn.innerText = fireOn ? "Fire: ON" : "Fire: OFF";
-};
   const rect = canvas.getBoundingClientRect();
   const touchX = e.touches[0].clientX - rect.left;
 
@@ -84,7 +68,7 @@ fireBtn.onclick = () => {
   if(player.x > canvas.width - player.width)
     player.x = canvas.width - player.width;
 }
-
+  
 let player, enemies, bullets, explosions, stars;
 let score, gameOver=false, paused=false;
 let keys={};
@@ -141,8 +125,6 @@ function restartGame(){ init(); }
 
 // Pause
 function togglePause(){ if(!gameOver) paused=!paused; }
-
-<button id="toggleFireBtn" onclick="toggleFire()">Fire: OFF</button>
 
 // Unlock pistol
 function unlockGun(){
