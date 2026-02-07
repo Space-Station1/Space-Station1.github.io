@@ -92,6 +92,22 @@ let currentShotIndex = 0;
 const unlockBtn = document.getElementById("unlockBtn");
 const rebirthBtn = document.getElementById("rebirthBtn");
 
+/* ===== FIRE ON / OFF BUTTON ===== */
+
+// Lag knapp i UI (samme stil som andre)
+const fireBtn = document.createElement("button");
+fireBtn.innerText = "Fire: OFF";
+document.querySelector(".ui").appendChild(fireBtn);
+
+// Fire-status
+let fireOn = false;
+
+// Toggle
+fireBtn.onclick = () => {
+  fireOn = !fireOn;
+  fireBtn.innerText = fireOn ? "Fire: ON" : "Fire: OFF";
+};
+  
 // Oppgraderingskostnad
 function upgradeCost(){ return 200*upgradeLevel + 100; }
 function saveProgress(){
