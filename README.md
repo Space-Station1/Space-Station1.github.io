@@ -121,6 +121,10 @@ button { padding:10px 15px; font-size:16px; cursor:pointer; }
 <canvas id="game" width="400" height="600"></canvas>
 
 <script>
+// BOOSTERS
+let armorOn = false;
+let doubleDamageOn = false;
+let slowEnemiesOn = false;
 const canvas = document.getElementById("game");
 const ctx = canvas.getContext("2d");
 const GAME_SPEED = 1.0;
@@ -304,6 +308,12 @@ function init(){
   stars = Array.from({length:60},()=>({x:Math.random()*400,y:Math.random()*600,s:1+Math.random()*2}));
   score=0; gameOver=false; paused=false; shootCooldown=0; groupShooting=false; currentShotIndex=0;
   updateUI();
+  player = {
+  x:180, y:540,
+  width:35, height:35,
+  speed:6*GAME_SPEED,
+  hp: armorOn ? 3 : 1
+};
 }
 
 // Restart runden
@@ -348,6 +358,32 @@ function rebirth(){
   alert("Rebirth complete! +50 gems!");
   rebirthBtn.style.display="none";
 }
+function buyArmor(){
+  if(gems < 20) return alert("Not enough gems!");
+  if(armorOn) return alert("Armor already active!");
+  gems -= 20;
+  armorOn = true;
+  saveProgress();
+  updateUI();
+}
+
+function buyDoubleDamage(){
+  if(gems < 30) return alert("Not enough gems!");
+  if(doubleDamageOn) return alert("Already active!");
+  gems -= 30;
+  doubleDamageOn = true;
+  saveProgress();
+  updateUI();
+}
+
+function buySlowEnemies(){
+  if(gems < 25) return alert("Not enough gems!");
+  if(slowEnemiesOn) return alert("Already active!");
+  gems -= 25;
+  slowEnemiesOn = true;
+  saveProgress();
+  updateUI();
+}
 
 // Oppdater UI
 function updateUI(){
@@ -356,6 +392,8 @@ function updateUI(){
   document.getElementById("gems").innerText=`Gems: ${gems}`;
   unlockBtn.style.display = (score>=1000 && !hasGun) ? "block" : "none";
 }
+document.getElementById("boosters").innerText =
+  `Armor: ${armorOn ? "ON" : "OFF"} | 2x DMG: ${doubleDamageOn ? "ON" : "OFF"} | Slow: ${slowEnemiesOn ? "ON" : "OFF"}`;
 
 // Input
 document.addEventListener("keydown", e=>{
@@ -371,7 +409,7 @@ function spawnEnemy(){
   for(let i=0;i<spawnCount;i++){
     const r=Math.random();
     if(r<0.75){
-      enemies.push({x:Math.random()*370,y:-40,w:30,h:30,speedY:(1.8 + score/2000)*GAME_SPEED,speedX:0,hp:1,color:'#f44', coins:10});
+      enemies.push({x:Math.random()*370,y:-40,w:30,h:30,speedY: (1.8 + score/2000) * GAME_SPEED * (slowEnemiesOn ? 0.7 : 1),speedX:0,hp:1,color:'#f44', coins:10});
     } else if(r<0.95){
       const left=Math.random()<0.5;
       enemies.push({x:left?-40:440,y:Math.random()*250,w:35,h:35,speedY:1.5*GAME_SPEED,speedX:left?2.5*GAME_SPEED:-2.5*GAME_SPEED,hp:1,color:'#fa0', coins:10});
@@ -432,7 +470,7 @@ function update(){
     enemies.forEach((e,ei)=>{
       if(b.x<e.x+e.w && b.x+b.w>e.x && b.y<e.y+e.h && b.y+b.h>e.y){
         explode(e.x+e.w/2,e.y+e.h/2);
-        e.hp--; bullets.splice(bi,1);
+        e.hp -= doubleDamageOn ? 2 : 1; bullets.splice(bi,1);
         if(e.hp<=0){
           enemies.splice(ei,1);
           coins += e.coins;
@@ -445,7 +483,11 @@ function update(){
 
   enemies.forEach(e=>{
     if(player.x<e.x+e.w && player.x+player.width>e.x && player.y<e.y+e.h && player.y+player.height>e.y){
-      gameOver=true;
+      player.hp--;
+
+if(player.hp <= 0){
+  gameOver = true;
+}
       if(score>highscore){ highscore=score; localStorage.setItem('hard_highscore',highscore); }
     }
   });
