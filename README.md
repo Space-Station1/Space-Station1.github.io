@@ -162,7 +162,12 @@ function togglePause(){ if(!gameOver) paused=!paused; }
 // Unlock pistol
 function unlockGun(){
   if(score>=1000 && coins>=100 && !hasGun){
-    coins-=100; hasGun=true; saveProgress(); updateUI();
+    coins-=100; hasGun=true; function saveProgress(){
+  localStorage.setItem("coins", coins);
+  localStorage.setItem("upgradeLevel", upgradeLevel);
+  localStorage.setItem("gems", gems);
+  localStorage.setItem("hasGun", hasGun);
+    }; updateUI();
     alert("Pistol unlocked!");
   } else if(score<1000) alert("Score 1000 needed!");
   else if(coins<100) alert("Not enough coins!");
