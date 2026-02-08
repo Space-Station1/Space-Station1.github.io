@@ -8,6 +8,67 @@ canvas { background:#05080f; border:2px solid #4af; }
 .ui { position:absolute; top:20px; right:20px; display:flex; flex-direction:column; gap:10px; z-index:2; }
 button { padding:10px 15px; font-size:16px; cursor:pointer; }
 #loading { position:absolute; inset:0; background:black; display:flex; flex-direction:column; justify-content:center; align-items:center; z-index:5; }
+#shop {
+  position: absolute;
+  left: 10px;
+  top: 80px;
+  width: 220px;
+  background: #8b5a2b;
+  border: 4px solid #000;
+  padding: 10px;
+  font-family: monospace;
+  color: #000;
+}
+
+#shop h2 {
+  text-align: center;
+  margin: 4px 0 10px;
+  border-bottom: 4px solid #000;
+}
+
+.section {
+  margin-bottom: 12px;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
+}
+
+.item {
+  background: #c68642;
+  border: 3px solid #000;
+  padding: 4px;
+  cursor: pointer;
+  text-align: center;
+  font-size: 11px;
+}
+
+.item:hover {
+  background: #d89b5a;
+}
+
+.skin {
+  width: 32px;
+  height: 32px;
+  margin: 0 auto 4px;
+  border: 2px solid #000;
+}
+
+/* Skins */
+.green { background: #00ff00; }
+.purple { background: #a020f0; }
+.gold { background: gold; }
+
+#shop button {
+  width: 100%;
+  margin-top: 4px;
+  font-family: monospace;
+  border: 3px solid #000;
+  background: #c68642;
+  cursor: pointer;
+}
 </style>
 </head>
 <body>
@@ -18,6 +79,34 @@ button { padding:10px 15px; font-size:16px; cursor:pointer; }
 </div>
 
 <div class="ui">
+<div id="shop">
+  <h2>SHOP</h2>
+
+  <div class="section">
+    <h3>Skins</h3>
+    <div class="grid">
+      <div class="item" onclick="buySkin('green')">
+        <div class="skin green"></div>
+        <span>Green<br>10💎</span>
+      </div>
+      <div class="item" onclick="buySkin('purple')">
+        <div class="skin purple"></div>
+        <span>Purple<br>15💎</span>
+      </div>
+      <div class="item" onclick="buySkin('gold')">
+        <div class="skin gold"></div>
+        <span>Gold<br>25💎</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <h3>Boosters</h3>
+    <button onclick="buyBooster('armor')">Armor (20💎)</button>
+    <button onclick="buyBooster('damage')">2x Damage (30💎)</button>
+    <button onclick="buyBooster('speed')">1.5x Speed (25💎)</button>
+  </div>
+</div>
 <button onclick="togglePause()">Pause</button>
 <button onclick="restartGame()">Restart</button>
 <button id="unlockBtn" onclick="unlockGun()">Unlock Gun</button>
@@ -85,6 +174,71 @@ hideBtn.onclick = () => {
 
   hideBtn.textContent = uiHidden ? "Show UI" : "Hide UI";
 };  
+/* ===== SHOP DATA ===== */
+
+let ownedSkins = JSON.parse(localStorage.getItem("ownedSkins")) || ["green"];
+let activeSkin = localStorage.getItem("activeSkin") || "green";
+
+let boosters = JSON.parse(localStorage.getItem("boosters")) || {
+  armor: false,
+  damage: false,
+  speed: false
+};
+
+/* ===== SKINS ===== */
+
+function buySkin(name){
+  const prices = { green:10, purple:15, gold:25 };
+
+  if (ownedSkins.includes(name)) {
+    activeSkin = name;
+    localStorage.setItem("activeSkin", activeSkin);
+    return;
+  }
+
+  if (gems >= prices[name]) {
+    gems -= prices[name];
+    ownedSkins.push(name);
+    activeSkin = name;
+
+    localStorage.setItem("ownedSkins", JSON.stringify(ownedSkins));
+    localStorage.setItem("activeSkin", activeSkin);
+    localStorage.setItem("gems", gems);
+
+    updateUI();
+  } else {
+    alert("Not enough gems!");
+  }
+}
+
+/* ===== BOOSTERS ===== */
+
+function buyBooster(type){
+  const prices = { armor:20, damage:30, speed:25 };
+
+  if (boosters[type]) return;
+
+  if (gems >= prices[type]) {
+    gems -= prices[type];
+    boosters[type] = true;
+
+    localStorage.setItem("boosters", JSON.stringify(boosters));
+    localStorage.setItem("gems", gems);
+
+    applyBoosters();
+    updateUI();
+  } else {
+    alert("Not enough gems!");
+  }
+}
+
+/* ===== APPLY EFFECTS ===== */
+
+function applyBoosters(){
+  if (boosters.speed) player.speed = 6 * 1.5;
+  if (boosters.damage) bulletSpeed *= 1.5;
+  if (boosters.armor) player.armor = true;
+}
 let player, enemies, bullets, explosions, stars;
 let score, gameOver=false, paused=false;
 let keys={};
@@ -307,7 +461,12 @@ function draw(){
   ctx.fillRect(player.x,player.y,player.width,player.height);
   ctx.clearRect(0,0,400,600);
   stars.forEach(s=>{ ctx.fillStyle='white'; ctx.fillRect(s.x,s.y,2,2); });
-  ctx.fillStyle='#0f0'; ctx.fillRect(player.x,player.y,player.width,player.height);
+  const skinColors = {
+  green: "#00ff00",
+  purple: "#a020f0",
+  gold: "gold"
+};
+ctx.fillStyle = skinColors[activeSkin] || "#0f0"; ctx.fillRect(player.x,player.y,player.width,player.height);
   ctx.fillStyle='white'; bullets.forEach(b=>ctx.fillRect(b.x,b.y,b.w,b.h));
   enemies.forEach(e=>{
     ctx.fillStyle=e.color; ctx.fillRect(e.x,e.y,e.w,e.h);
