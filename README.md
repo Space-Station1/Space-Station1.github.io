@@ -315,6 +315,14 @@ function update(){
 }
 
 function draw(){
+  function drawPlayer(){
+  if(activeSkin === "creeper"){
+    ctx.drawImage(creeperImg, player.x, player.y, player.width, player.height);
+  } else {
+    ctx.fillStyle = player.color;
+  drawPlayer();
+  }
+  }
   ctx.clearRect(0,0,400,600);
   stars.forEach(s=>{ ctx.fillStyle='white'; ctx.fillRect(s.x,s.y,2,2); });
   ctx.fillStyle='#0f0'; ctx.fillRect(player.x,player.y,player.width,player.height);
