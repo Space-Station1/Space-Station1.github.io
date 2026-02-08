@@ -10,7 +10,7 @@ button { padding:10px 15px; font-size:16px; cursor:pointer; }
 #loading { position:absolute; inset:0; background:black; display:flex; flex-direction:column; justify-content:center; align-items:center; z-index:5; }
 #shop {
   position: absolute;
-  left: -5000px;
+  left: -2000px;
   top: 80px;
   width: 220px;
   background: #8b5a2b;
