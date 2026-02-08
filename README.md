@@ -82,16 +82,6 @@ let gems = Number(localStorage.getItem("gems")) || 0;
 
 let hasGun = localStorage.getItem("hasGun") === "true";
 
-let ownedSkins = JSON.parse(localStorage.getItem("ownedSkins")) || ["default"];
-let activeSkin = localStorage.getItem("activeSkin") || "default";
-
-let boosters = JSON.parse(localStorage.getItem("boosters")) || {
-  armor: false,
-  speed: 1,
-  strength: 1,
-  fireRate: 1
-};
-
 // Våpensystem
 let bulletSpeed = 8*GAME_SPEED;
 let shotsPerGroup = [1,1,2,2,3,3]; // antall skudd i gruppen per oppgr
