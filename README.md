@@ -5,12 +5,12 @@
 <style>
 body { margin:0; background:black; color:white; display:flex; justify-content:center; align-items:center; height:100vh; font-family:Arial; overflow:hidden; }
 canvas { background:#05080f; border:2px solid #4af; }
-.ui { position:absolute; top:40px; left:20px; display:flex; flex-direction:column; gap:10px; z-index:2; }
+.ui { position:absolute; top:40px; right:20px; display:flex; flex-direction:column; gap:10px; z-index:2; }
 button { padding:10px 15px; font-size:16px; cursor:pointer; }
 #loading { position:absolute; inset:0; background:black; display:flex; flex-direction:column; justify-content:center; align-items:center; z-index:5; }
 #shop {
   position: absolute;
-  left: 10px;
+  left: 40px;
   top: 80px;
   width: 220px;
   background: #8b5a2b;
