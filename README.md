@@ -29,11 +29,6 @@ button { padding:10px 15px; font-size:16px; cursor:pointer; }
 <div id="gems">Gems: 0</div>
 </div>
 <button onclick="toggleShop()">Shop</button>
-let shopOpen = false;
-
-function toggleShop(){
-  shopOpen = !shopOpen;
-  document.getElementById("shop").style.display = shopOpen ? "block" : "none";
 }
 <div id="shop" style="
 display:none;
