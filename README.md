@@ -28,7 +28,37 @@ button { padding:10px 15px; font-size:16px; cursor:pointer; }
 <div id="upgrade">Upgrade cost: 0</div>
 <div id="gems">Gems: 0</div>
 </div>
+<button onclick="toggleShop()">Shop</button>
+}
+<div id="shop" style="
+display:none;
+position:absolute;
+left:20px;
+top:20px;
+background:#111;
+padding:10px;
+border:2px solid #4af;
+">
+  <h3>Shop</h3>
+  <button onclick="buySkin('creeper',50)">Creeper Skin (50💎)</button>
+  <button onclick="buyBooster('speed',30)">Speed x1.5 (30💎)</button>
+</div>
 
+<canvas id="game" width="400" height="600"></canvas>
+
+<script>
+const canvas = document.getElementById("game");
+const ctx = canvas.getContext("2d");
+const GAME_SPEED = 1.0;
+
+  /* ===== TOUCH FOLLOW FINGER ===== */
+
+let isTouching = false;
+
+canvas.addEventListener("touchstart", e => {
+  isTouching = true;
+  movePlayerToTouch(e);
+});
 canvas.addEventListener("touchmove", e => {
   if(isTouching) movePlayerToTouch(e);
 });
