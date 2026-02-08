@@ -28,6 +28,38 @@ button { padding:10px 15px; font-size:16px; cursor:pointer; }
 <div id="upgrade">Upgrade cost: 0</div>
 <div id="gems">Gems: 0</div>
 </div>
+<button onclick="toggleShop()">Shop</button>
+let shopOpen = false;
+
+function toggleShop(){
+  shopOpen = !shopOpen;
+  document.getElementById("shop").style.display = shopOpen ? "block" : "none";
+}
+<div id="shop" style="
+display:none;
+position:absolute;
+left:20px;
+top:20px;
+background:#111;
+padding:10px;
+border:2px solid #4af;
+">
+  <h3>Shop</h3>
+  <button onclick="buySkin('creeper',50)">Creeper Skin (50💎)</button>
+  <button onclick="buyBooster('speed',30)">Speed x1.5 (30💎)</button>
+</div>
+function buySkin(name, price){
+  if(gems < price) return alert("Not enough gems");
+  if(ownedSkins.includes(name)) return alert("Already owned");
+
+  gems -= price;
+  ownedSkins.push(name);
+  activeSkin = name;
+
+  localStorage.setItem("ownedSkins", JSON.stringify(ownedSkins));
+  localStorage.setItem("activeSkin", activeSkin);
+  localStorage.setItem("gems", gems);
+}
 
 <canvas id="game" width="400" height="600"></canvas>
 
