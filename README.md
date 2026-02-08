@@ -75,7 +75,7 @@ button { padding:10px 15px; font-size:16px; cursor:pointer; }
 
 <div id="loading">
 <h1>🚀Space-Station1</h1>
-<p>Sorry we're having some problems, please try again later…</p>
+<p>Sorry we're having some issues, please try again later…</p>
 </div>
 
 <div class="ui">
