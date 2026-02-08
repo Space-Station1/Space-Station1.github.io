@@ -9,7 +9,7 @@ canvas { background:#05080f; border:2px solid #4af; }
 button { padding:10px 15px; font-size:16px; cursor:pointer; }
 #loading { position:absolute; inset:0; background:black; display:flex; flex-direction:column; justify-content:center; align-items:center; z-index:5; }
 #shop {
-  position: absolute;
+  position: absolute; l
   left: -800px;
   top: 80px;
   width: 220px;
@@ -239,16 +239,25 @@ function buyBooster(type){
 /* ===== APPLY EFFECTS ===== */
 
 function applyBoosters() {
-    // Armor booster
-    if (boosters.armor) player.armor = true;
+    if (!player || !enemies) return; // sikkerhet, krasjer ikke hvis init ikke ferdig
 
-    // 2x damage booster
-    if (boosters.doubleDamage) bulletDamage *= 2;
+    // Armor
+    if (boosters.armor) {
+        player.armor = true;
+        armorOn = true;
+    }
 
-    // Slow enemies booster
-    if (boosters.slowEnemies) {
+    // 2x Damage
+    if (boosters.damage) {
+        doubleDamageOn = true;
+    }
+
+    // Slow enemies
+    if (boosters.speed) {
+        slowEnemiesOn = true;
         enemies.forEach(enemy => {
-            enemy.speed *= 0.7;
+            enemy.speedY *= 0.7;
+            enemy.speedX *= 0.7;
         });
     }
 }
