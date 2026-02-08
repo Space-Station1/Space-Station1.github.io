@@ -321,17 +321,27 @@ function resetData(){
 
 // Init spill
 function init(){
-  player={x:180,y:540,width:35,height:35,speed:6*GAME_SPEED};
-  enemies=[]; bullets=[]; explosions=[];
-  stars = Array.from({length:60},()=>({x:Math.random()*400,y:Math.random()*600,s:1+Math.random()*2}));
-  score=0; gameOver=false; paused=false; shootCooldown=0; groupShooting=false; currentShotIndex=0;
-  updateUI();
   player = {
-  x:180, y:540,
-  width:35, height:35,
-  speed:6*GAME_SPEED,
-  hp: armorOn ? 3 : 1
-};
+    x: 180,
+    y: 540,
+    width: 35,
+    height: 35,
+    speed: 6*GAME_SPEED,
+    hp: armorOn ? 3 : 1
+  };
+
+  enemies = [];
+  bullets = [];
+  explosions = [];
+  stars = Array.from({length:60},()=>({x:Math.random()*400,y:Math.random()*600,s:1+Math.random()*2}));
+  score = 0;
+  gameOver = false;
+  paused = false;
+  shootCooldown = 0;
+  groupShooting = false;
+  currentShotIndex = 0;
+
+  updateUI();
 }
 
 // Restart runden
