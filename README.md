@@ -238,10 +238,19 @@ function buyBooster(type){
 
 /* ===== APPLY EFFECTS ===== */
 
-function applyBoosters(){
-  if (boosters.speed) player.speed = 6 * 1.5;
-  if (boosters.damage) bulletSpeed *= 1.5;
-  if (boosters.armor) player.armor = true;
+function applyBoosters() {
+    // Armor booster
+    if (boosters.armor) player.armor = true;
+
+    // 2x damage booster
+    if (boosters.doubleDamage) bulletDamage *= 2;
+
+    // Slow enemies booster
+    if (boosters.slowEnemies) {
+        enemies.forEach(enemy => {
+            enemy.speed *= 0.7;
+        });
+    }
 }
 let player, enemies, bullets, explosions, stars;
 let score, gameOver=false, paused=false;
