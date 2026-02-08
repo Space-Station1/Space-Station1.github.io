@@ -34,7 +34,7 @@ button { padding:10px 15px; font-size:16px; cursor:pointer; }
 <script>
 const canvas = document.getElementById("game");
 const ctx = canvas.getContext("2d");
-const GAME_SPEED = 0.9;
+const GAME_SPEED = 1.0;
 
   /* ===== TOUCH FOLLOW FINGER ===== */
 
@@ -96,7 +96,7 @@ let upgradeLevel = Number(localStorage.getItem("upgradeLevel")) || 0;
 let highscore = Number(localStorage.getItem("hard_highscore")) || 0;
 let gems = Number(localStorage.getItem("gems")) || 0;
 
-let hasGun = false;
+let hasGun = localStorage.getItem("hasGun") === "true";
 
 // Våpensystem
 let bulletSpeed = 8*GAME_SPEED;
