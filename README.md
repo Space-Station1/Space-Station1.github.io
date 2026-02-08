@@ -74,7 +74,7 @@ button { padding:10px 15px; font-size:16px; cursor:pointer; }
 <body>
 
 <div id="loading">
-<h1>🚀 space-station</h1>
+<h1>🚀Space-Station1</h1>
 <p>Sorry we're having some problems, please try again later…</p>
 </div>
 
@@ -104,7 +104,7 @@ button { padding:10px 15px; font-size:16px; cursor:pointer; }
     <h3>Boosters</h3>
     <button onclick="buyBooster('armor')">Armor (20💎)</button>
     <button onclick="buyBooster('damage')">2x Damage (30💎)</button>
-    <button onclick="buyBooster('speed')">1,5x Player Speed (25💎)</button>
+    <button onclick="buyBooster('speed')">0,7x Enemy speed (25💎)</button>
   </div>
 </div>
 <button onclick="togglePause()">Pause</button>
