@@ -97,7 +97,6 @@ let highscore = Number(localStorage.getItem("hard_highscore")) || 0;
 let gems = Number(localStorage.getItem("gems")) || 0;
 
 let hasGun = localStorage.getItem("hasGun") === "true";
-}
 
 // Våpensystem
 let bulletSpeed = 8*GAME_SPEED;
