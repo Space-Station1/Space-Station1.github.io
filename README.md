@@ -229,10 +229,13 @@ function rebirth(){
 
 // Oppdater UI
 function updateUI(){
-  document.getElementById("coins").innerText=`Coins: ${coins}`;
-  document.getElementById("upgrade").innerText = hasGun ? `Upgrade cost: ${upgradeCost()}` : "Unlock gun first";
-  document.getElementById("gems").innerText=`Gems: ${gems}`;
-  unlockBtn.style.display = (score>=1000 && !hasGun) ? "block" : "none";
+  document.getElementById("coins").innerText = `Coins: ${coins}`;
+  document.getElementById("upgrade").innerText =
+    hasGun ? `Upgrade cost: ${200 * upgradeLevel + 100}` : "Unlock gun first";
+  document.getElementById("gems").innerText = `Gems: ${gems}`;
+
+  // Vis unlock-knappen så lenge du ikke har gun
+  unlockBtn.style.display = hasGun ? "none" : "block";
 }
 
 // Input
