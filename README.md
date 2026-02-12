@@ -74,7 +74,38 @@ const ui = document.querySelector(".ui");
   <button onclick="buyBooster('doubleDamage')">2x Damage (75 coins)</button>
   <button onclick="buyBooster('slowEnemies')">Slow Enemies (100 coins)</button>
 </div>
-  
+  // Boosters fra start
+let boosters = {
+  armor: false,
+  doubleDamage: false,
+  slowEnemies: false
+};
+
+// Funksjon for å kjøpe boosters
+function buyBooster(type) {
+  if(boosters[type]){
+    alert(`${type} already owned!`);
+    return;
+  }
+
+  let cost = 0;
+  if(type === "armor") cost = 50;
+  if(type === "doubleDamage") cost = 75;
+  if(type === "slowEnemies") cost = 100;
+
+  if(coins < cost){
+    alert("Not enough coins!");
+    return;
+  }
+
+  coins -= cost;
+  boosters[type] = true;
+
+  saveProgress();
+  updateUI();
+  alert(`${type} purchased!`);
+}
+
 const hideBtn = document.createElement("button");
 hideBtn.textContent = "Hide UI";
 ui.prepend(hideBtn);
@@ -223,6 +254,42 @@ function updateUI(){
 
   unlockBtn.style.display = hasGun ? "none" : "block";
 }
+// slowEnemies booster
+let enemySpeedMultiplier = boosters.slowEnemies ? 0.7 : 1;
+
+enemies.forEach(e=>{
+  e.y += e.speedY * enemySpeedMultiplier;
+  e.x += e.speedX;
+});
+
+// doubleDamage booster
+bullets.forEach((b,bi)=>{
+  enemies.forEach((e,ei)=>{
+    if(b.x<e.x+e.w && b.x+b.w>e.x && b.y<e.y+e.h && b.y+b.h>e.y){
+      explode(e.x+e.w/2,e.y+e.h/2);
+      e.hp -= boosters.doubleDamage ? 2 : 1; // bruk double damage
+      bullets.splice(bi,1);
+      if(e.hp <=0){
+        enemies.splice(ei,1);
+        coins += e.coins;
+        score += e.isBoss ? 1000 : 200;
+        saveProgress(); updateUI();
+      }
+    }
+  });
+});
+
+// armor booster (player dør ikke første treff)
+enemies.forEach(e=>{
+  if(player.x<e.x+e.w && player.x+player.width>e.x && player.y<e.y+e.h && player.y+player.height>e.y){
+    if(boosters.armor && !player.armorUsed){
+      player.armorUsed = true; // første treff nuller
+    } else {
+      gameOver = true;
+      if(score>highscore){ highscore=score; localStorage.setItem('hard_highscore',highscore); }
+    }
+  }
+});
 
 // Input
 document.addEventListener("keydown", e=>{
