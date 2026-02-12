@@ -106,32 +106,6 @@ let boosters = {
   slowEnemies: false
 };
 
-// Juster bulletSpeed hvis den mangler
-if (typeof bulletSpeed === "undefined") {
-  bulletSpeed = 8 * GAME_SPEED;
-}
-
-// Lagre progresjon trygt
-function saveProgress(){
-  localStorage.setItem("coins", coins);
-  localStorage.setItem("upgradeLevel", upgradeLevel);
-  localStorage.setItem("gems", gems);
-  localStorage.setItem("hasGun", hasGun);
-}
-
-// Reset uten undefined variabler
-function resetData(){
-  localStorage.removeItem("coins");
-  localStorage.removeItem("upgradeLevel");
-  localStorage.removeItem("gems");
-  localStorage.removeItem("hasGun");
-
-  coins = 100;
-  upgradeLevel = 0;
-  gems = 0;
-  hasGun = false;
-  bulletSpeed = 8 * GAME_SPEED;
-
   boosters.armor = false;
   boosters.doubleDamage = false;
   boosters.slowEnemies = false;
