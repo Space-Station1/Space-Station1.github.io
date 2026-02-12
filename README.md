@@ -1,4 +1,3 @@
-
 <html lang="no">
 <head>
 <meta charset="UTF-8">
@@ -98,12 +97,21 @@ let highscore = Number(localStorage.getItem("hard_highscore")) || 0;
 let gems = Number(localStorage.getItem("gems")) || 0;
 
 let hasGun = localStorage.getItem("hasGun") === "true";
-// --- SHOP FIX SAFE PATCH ---
+// ===== SAFE SHOP + BOOSTER BASE =====
 
-// Sørg for at groupCooldown finnes (hindrer crash)
-let groupCooldown = 0;
+// Boosters definert fra start (ingen undefined)
+let boosters = {
+  armor: false,
+  doubleDamage: false,
+  slowEnemies: false
+};
 
-// Fiks saveProgress (overskriver ikke noe annet)
+// Juster bulletSpeed hvis den mangler
+if (typeof bulletSpeed === "undefined") {
+  bulletSpeed = 8 * GAME_SPEED;
+}
+
+// Lagre progresjon trygt
 function saveProgress(){
   localStorage.setItem("coins", coins);
   localStorage.setItem("upgradeLevel", upgradeLevel);
@@ -111,7 +119,7 @@ function saveProgress(){
   localStorage.setItem("hasGun", hasGun);
 }
 
-// Fiks resetData (ingen undefined variabler)
+// Reset uten undefined variabler
 function resetData(){
   localStorage.removeItem("coins");
   localStorage.removeItem("upgradeLevel");
@@ -123,6 +131,10 @@ function resetData(){
   gems = 0;
   hasGun = false;
   bulletSpeed = 8 * GAME_SPEED;
+
+  boosters.armor = false;
+  boosters.doubleDamage = false;
+  boosters.slowEnemies = false;
 
   saveProgress();
   updateUI();
@@ -192,16 +204,28 @@ function togglePause(){ if(!gameOver) paused=!paused; }
 
 // Unlock pistol
 function unlockGun(){
-  if(score>=1000 && coins>=100 && !hasGun){
-    coins-=100; hasGun=true; function saveProgress(){
-  localStorage.setItem("coins", coins);
-  localStorage.setItem("upgradeLevel", upgradeLevel);
-  localStorage.setItem("gems", gems);
-  localStorage.setItem("hasGun", hasGun);
-    }; updateUI();
-    alert("Pistol unlocked!");
-  } else if(score<1000) alert("Score 1000 needed!");
-  else if(coins<100) alert("Not enough coins!");
+  if(score < 1000){
+    alert("Score 1000 needed!");
+    return;
+  }
+
+  if(coins < 100){
+    alert("Not enough coins!");
+    return;
+  }
+
+  if(hasGun){
+    alert("Already unlocked!");
+    return;
+  }
+
+  coins -= 100;
+  hasGun = true;
+
+  saveProgress();
+  updateUI();
+
+  alert("Pistol unlocked!");
 }
 
 // Oppgrader pistol
@@ -234,7 +258,6 @@ function updateUI(){
     hasGun ? `Upgrade cost: ${200 * upgradeLevel + 100}` : "Unlock gun first";
   document.getElementById("gems").innerText = `Gems: ${gems}`;
 
-  // Vis unlock-knappen så lenge du ikke har gun
   unlockBtn.style.display = hasGun ? "none" : "block";
 }
 
