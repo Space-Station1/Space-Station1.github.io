@@ -14,7 +14,7 @@ button { padding:10px 15px; font-size:16px; cursor:pointer; }
 
 <div id="loading">
 <h1>🚀 space-station</h1>
-<p>Laster romstasjon…</p>
+<p>Sorry we're having some issues, please try again later…</p>
 </div>
 
 <div class="ui">
