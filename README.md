@@ -1,3 +1,4 @@
+
 <html lang="no">
 <head>
 <meta charset="UTF-8">
@@ -91,49 +92,18 @@ let score, gameOver=false, paused=false;
 let keys={};
 
 // Lagret data
-// ==========================
-// ===== SHOP SYSTEM =======
-// ==========================
-
-// Lagret data
 let coins = Number(localStorage.getItem("coins")) || 100;
 let upgradeLevel = Number(localStorage.getItem("upgradeLevel")) || 0;
 let highscore = Number(localStorage.getItem("hard_highscore")) || 0;
 let gems = Number(localStorage.getItem("gems")) || 0;
+
 let hasGun = localStorage.getItem("hasGun") === "true";
+// --- SHOP FIX SAFE PATCH ---
 
-// Våpen stats
-let bulletSpeed = 8 * GAME_SPEED;
-let shotsPerGroup = [1,1,2,2,3,3];
-let cooldownSettings = [30,9,30,9,30,9];
-
-let shootCooldown = 0;
-let groupShooting = false;
-let currentShotIndex = 0;
+// Sørg for at groupCooldown finnes (hindrer crash)
 let groupCooldown = 0;
 
-// UI referanser
-const unlockBtn = document.getElementById("unlockBtn");
-const rebirthBtn = document.getElementById("rebirthBtn");
-
-// Fire toggle knapp
-const fireBtn = document.createElement("button");
-fireBtn.innerText = "Fire: OFF";
-document.querySelector(".ui").appendChild(fireBtn);
-
-let fireOn = false;
-
-fireBtn.onclick = () => {
-  fireOn = !fireOn;
-  fireBtn.innerText = fireOn ? "Fire: ON" : "Fire: OFF";
-};
-
-// Upgrade cost
-function upgradeCost(){
-  return 200 * upgradeLevel + 100;
-}
-
-// Lagre progresjon
+// Fiks saveProgress (overskriver ikke noe annet)
 function saveProgress(){
   localStorage.setItem("coins", coins);
   localStorage.setItem("upgradeLevel", upgradeLevel);
@@ -141,107 +111,128 @@ function saveProgress(){
   localStorage.setItem("hasGun", hasGun);
 }
 
-// Reset alt
+// Fiks resetData (ingen undefined variabler)
 function resetData(){
-  localStorage.clear();
+  localStorage.removeItem("coins");
+  localStorage.removeItem("upgradeLevel");
+  localStorage.removeItem("gems");
+  localStorage.removeItem("hasGun");
+
   coins = 100;
   upgradeLevel = 0;
   gems = 0;
   hasGun = false;
   bulletSpeed = 8 * GAME_SPEED;
+
+  saveProgress();
   updateUI();
   alert("Data reset!");
 }
 
-// Unlock gun
-function unlockGun(){
-  if(score < 1000){
-    alert("Score 1000 needed!");
-    return;
-  }
+// Våpensystem
+let bulletSpeed = 8*GAME_SPEED;
+let shotsPerGroup = [1,1,2,2,3,3]; // antall skudd i gruppen per oppgr
+let cooldownSettings = [30,9,30,9,30,9]; // frames mellom grupper per oppgr
+let shootCooldown = 0; // vent før neste gruppe
+let groupShooting = false;
+let currentShotIndex = 0;
 
-  if(coins < 100){
-    alert("Not enough coins!");
-    return;
-  }
+// UI
+const unlockBtn = document.getElementById("unlockBtn");
+const rebirthBtn = document.getElementById("rebirthBtn");
 
-  if(hasGun){
-    alert("Already unlocked!");
-    return;
-  }
+/* ===== FIRE ON / OFF BUTTON ===== */
 
-  coins -= 100;
-  hasGun = true;
-  saveProgress();
-  updateUI();
-  alert("Pistol unlocked!");
+// Lag knapp i UI (samme stil som andre)
+const fireBtn = document.createElement("button");
+fireBtn.innerText = "Fire: OFF";
+document.querySelector(".ui").appendChild(fireBtn);
+
+// Fire-status
+let fireOn = false;
+
+// Toggle
+fireBtn.onclick = () => {
+  fireOn = !fireOn;
+  fireBtn.innerText = fireOn ? "Fire: ON" : "Fire: OFF";
+};
+
+// Oppgraderingskostnad
+function upgradeCost(){ return 200*upgradeLevel + 100; }
+function saveProgress(){
+  localStorage.setItem("coins", coins);
+  localStorage.setItem("upgradeLevel", upgradeLevel);
+  localStorage.setItem("gems", gems);
 }
 
-// Upgrade weapon
-function upgradeWeapon(){
-  if(!hasGun){
-    alert("Unlock the gun first!");
-    return;
-  }
+// Reset alt data
+function resetData(){
+  localStorage.removeItem("coins");
+  localStorage.removeItem("upgradeLevel");
+  localStorage.removeItem("hard_highscore");
+  localStorage.removeItem("gems");
+  coins=100; upgradeLevel=0; highscore=0; gems=0; hasGun=false; bulletsPerGroup=1; bulletSpeed=8*GAME_SPEED;
+  updateUI(); alert("Data reset!");
+}
 
-  if(upgradeLevel >= 5){
-    alert("Max upgrade reached!");
-    return;
-  }
-
-  const cost = upgradeCost();
-
-  if(coins < cost){
-    alert("Not enough coins!");
-    return;
-  }
-
-  coins -= cost;
-  upgradeLevel++;
-  bulletSpeed = (8 + upgradeLevel * 2) * GAME_SPEED;
-
-  saveProgress();
+// Init spill
+function init(){
+  player={x:180,y:540,width:35,height:35,speed:6*GAME_SPEED};
+  enemies=[]; bullets=[]; explosions=[];
+  stars = Array.from({length:60},()=>({x:Math.random()*400,y:Math.random()*600,s:1+Math.random()*2}));
+  score=0; gameOver=false; paused=false; shootCooldown=0; groupShooting=false; currentShotIndex=0;
   updateUI();
+}
 
-  if(upgradeLevel === 5){
-    rebirthBtn.style.display = "block";
+// Restart runden
+function restartGame(){ init(); }
+
+// Pause
+function togglePause(){ if(!gameOver) paused=!paused; }
+
+// Unlock pistol
+function unlockGun(){
+  if(score>=1000 && coins>=100 && !hasGun){
+    coins-=100; hasGun=true; function saveProgress(){
+  localStorage.setItem("coins", coins);
+  localStorage.setItem("upgradeLevel", upgradeLevel);
+  localStorage.setItem("gems", gems);
+  localStorage.setItem("hasGun", hasGun);
+    }; updateUI();
+    alert("Pistol unlocked!");
+  } else if(score<1000) alert("Score 1000 needed!");
+  else if(coins<100) alert("Not enough coins!");
+}
+
+// Oppgrader pistol
+function upgradeWeapon(){
+  if(!hasGun) { alert("You need to unlock the gun first!"); return; }
+  if(upgradeLevel>=5){ alert("Max upgrade reached!"); return; }
+  const cost = upgradeCost();
+  if(coins>=cost){
+    coins-=cost; upgradeLevel++;
+    bulletSpeed = 8 + upgradeLevel*2;
+    saveProgress(); updateUI();
+    if(upgradeLevel==5) rebirthBtn.style.display="block";
   }
 }
 
 // Rebirth
 function rebirth(){
-  if(upgradeLevel < 5){
-    alert("Need max upgrade first!");
-    return;
-  }
-
-  if(coins < 1000){
-    alert("Need 1000 coins!");
-    return;
-  }
-
-  coins -= 1000;
-  upgradeLevel = 0;
-  hasGun = false;
-  bulletSpeed = 8 * GAME_SPEED;
-  gems += 50;
-
-  saveProgress();
-  updateUI();
-
-  rebirthBtn.style.display = "none";
+  if(upgradeLevel<5){ alert("Need max upgrade to rebirth!"); return; }
+  if(coins<1000){ alert("Need 1000 coins to rebirth!"); return; }
+  coins-=1000; hasGun=false; upgradeLevel=0; bulletSpeed=8*GAME_SPEED; gems+=50;
+  saveProgress(); updateUI();
   alert("Rebirth complete! +50 gems!");
+  rebirthBtn.style.display="none";
 }
 
 // Oppdater UI
 function updateUI(){
-  document.getElementById("coins").innerText = `Coins: ${coins}`;
-  document.getElementById("upgrade").innerText =
-    hasGun ? `Upgrade cost: ${upgradeCost()}` : "Unlock gun first";
-  document.getElementById("gems").innerText = `Gems: ${gems}`;
-
-  unlockBtn.style.display =
-    (score >= 1000 && !hasGun) ? "block" : "none";
+  document.getElementById("coins").innerText=`Coins: ${coins}`;
+  document.getElementById("upgrade").innerText = hasGun ? `Upgrade cost: ${upgradeCost()}` : "Unlock gun first";
+  document.getElementById("gems").innerText=`Gems: ${gems}`;
+  unlockBtn.style.display = (score>=1000 && !hasGun) ? "block" : "none";
 }
 
 // Input
