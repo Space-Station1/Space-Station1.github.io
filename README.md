@@ -5,108 +5,19 @@
 <style>
 body { margin:0; background:black; color:white; display:flex; justify-content:center; align-items:center; height:100vh; font-family:Arial; overflow:hidden; }
 canvas { background:#05080f; border:2px solid #4af; }
-.ui { position:absolute; top:40px; right:20px; display:flex; flex-direction:column; gap:10px; z-index:2; }
+.ui { position:absolute; top:20px; right:20px; display:flex; flex-direction:column; gap:10px; z-index:2; }
 button { padding:10px 15px; font-size:16px; cursor:pointer; }
 #loading { position:absolute; inset:0; background:black; display:flex; flex-direction:column; justify-content:center; align-items:center; z-index:5; }
-#shop {
-  position: absolute; l
-  left: -800px;
-  top: 80px;
-  width: 220px;
-  background: #8b5a2b;
-  border: 4px solid #000;
-  padding: 10px;
-  font-family: monospace;
-  color: #000;
-}
-
-#shop h2 {
-  text-align: center;
-  margin: 4px 0 10px;
-  border-bottom: 4px solid #000;
-}
-
-.section {
-  margin-bottom: 12px;
-}
-
-.grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 6px;
-}
-
-.item {
-  background: #c68642;
-  border: 3px solid #000;
-  padding: 4px;
-  cursor: pointer;
-  text-align: center;
-  font-size: 11px;
-}
-
-.item:hover {
-  background: #d89b5a;
-}
-
-.skin {
-  width: 32px;
-  height: 32px;
-  margin: 0 auto 4px;
-  border: 2px solid #000;
-}
-
-/* Skins */
-.green { background: #00ff00; }
-.purple { background: #a020f0; }
-.gold { background: gold; }
-
-#shop button {
-  width: 100%;
-  margin-top: 4px;
-  font-family: monospace;
-  border: 3px solid #000;
-  background: #c68642;
-  cursor: pointer;
-}
 </style>
 </head>
 <body>
 
 <div id="loading">
-<h1>🚀Space-Station1</h1>
-<p>Sorry we're having some issues, please try again later…</p>
+<h1>🚀 space-station</h1>
+<p>Laster romstasjon…</p>
 </div>
 
 <div class="ui">
-<div id="shop">
-  <h2>SHOP</h2>
-
-  <div class="section">
-    <h3>Skins</h3>
-    <div class="grid">
-      <div class="item" onclick="buySkin('green')">
-        <div class="skin green"></div>
-        <span>Green<br>10💎</span>
-      </div>
-      <div class="item" onclick="buySkin('purple')">
-        <div class="skin purple"></div>
-        <span>Purple<br>15💎</span>
-      </div>
-      <div class="item" onclick="buySkin('gold')">
-        <div class="skin gold"></div>
-        <span>Gold<br>25💎</span>
-      </div>
-    </div>
-  </div>
-
-  <div class="section">
-    <h3>Boosters</h3>
-    <button onclick="buyBooster('armor')">Armor (20💎)</button>
-    <button onclick="buyBooster('damage')">2x Damage (30💎)</button>
-    <button onclick="buyBooster('speed')">0,7x Enemy speed (25💎)</button>
-  </div>
-</div>
 <button onclick="togglePause()">Pause</button>
 <button onclick="restartGame()">Restart</button>
 <button id="unlockBtn" onclick="unlockGun()">Unlock Gun</button>
@@ -121,10 +32,6 @@ button { padding:10px 15px; font-size:16px; cursor:pointer; }
 <canvas id="game" width="400" height="600"></canvas>
 
 <script>
-// BOOSTERS
-let armorOn = false;
-let doubleDamageOn = false;
-let slowEnemiesOn = false;
 const canvas = document.getElementById("game");
 const ctx = canvas.getContext("2d");
 const GAME_SPEED = 1.0;
@@ -137,6 +44,7 @@ canvas.addEventListener("touchstart", e => {
   isTouching = true;
   movePlayerToTouch(e);
 });
+
 canvas.addEventListener("touchmove", e => {
   if(isTouching) movePlayerToTouch(e);
 });
@@ -178,89 +86,6 @@ hideBtn.onclick = () => {
 
   hideBtn.textContent = uiHidden ? "Show UI" : "Hide UI";
 };  
-/* ===== SHOP DATA ===== */
-
-let ownedSkins = JSON.parse(localStorage.getItem("ownedSkins")) || ["green"];
-let activeSkin = localStorage.getItem("activeSkin") || "green";
-
-let boosters = JSON.parse(localStorage.getItem("boosters")) || {
-  armor: false,
-  damage: false,
-  speed: false
-};
-
-/* ===== SKINS ===== */
-
-function buySkin(name){
-  const prices = { green:10, purple:15, gold:25 };
-
-  if (ownedSkins.includes(name)) {
-    activeSkin = name;
-    localStorage.setItem("activeSkin", activeSkin);
-    return;
-  }
-
-  if (gems >= prices[name]) {
-    gems -= prices[name];
-    ownedSkins.push(name);
-    activeSkin = name;
-
-    localStorage.setItem("ownedSkins", JSON.stringify(ownedSkins));
-    localStorage.setItem("activeSkin", activeSkin);
-    localStorage.setItem("gems", gems);
-
-    updateUI();
-  } else {
-    alert("Not enough gems!");
-  }
-}
-
-/* ===== BOOSTERS ===== */
-
-function buyBooster(type){
-  const prices = { armor:20, damage:30, speed:25 };
-
-  if (boosters[type]) return;
-
-  if (gems >= prices[type]) {
-    gems -= prices[type];
-    boosters[type] = true;
-
-    localStorage.setItem("boosters", JSON.stringify(boosters));
-    localStorage.setItem("gems", gems);
-
-    applyBoosters();
-    updateUI();
-  } else {
-    alert("Not enough gems!");
-  }
-}
-
-/* ===== APPLY EFFECTS ===== */
-
-function applyBoosters() {
-    if (!player || !enemies) return; // sikkerhet, krasjer ikke hvis init ikke ferdig
-
-    // Armor
-    if (boosters.armor) {
-        player.armor = true;
-        armorOn = true;
-    }
-
-    // 2x Damage
-    if (boosters.damage) {
-        doubleDamageOn = true;
-    }
-
-    // Slow enemies
-    if (boosters.speed) {
-        slowEnemiesOn = true;
-        enemies.forEach(enemy => {
-            enemy.speedY *= 0.7;
-            enemy.speedX *= 0.7;
-        });
-    }
-}
 let player, enemies, bullets, explosions, stars;
 let score, gameOver=false, paused=false;
 let keys={};
@@ -300,7 +125,7 @@ fireBtn.onclick = () => {
   fireOn = !fireOn;
   fireBtn.innerText = fireOn ? "Fire: ON" : "Fire: OFF";
 };
-  
+
 // Oppgraderingskostnad
 function upgradeCost(){ return 200*upgradeLevel + 100; }
 function saveProgress(){
@@ -321,26 +146,10 @@ function resetData(){
 
 // Init spill
 function init(){
-  player = {
-    x: 180,
-    y: 540,
-    width: 35,
-    height: 35,
-    speed: 6*GAME_SPEED,
-    hp: armorOn ? 3 : 1
-  };
-
-  enemies = [];
-  bullets = [];
-  explosions = [];
+  player={x:180,y:540,width:35,height:35,speed:6*GAME_SPEED};
+  enemies=[]; bullets=[]; explosions=[];
   stars = Array.from({length:60},()=>({x:Math.random()*400,y:Math.random()*600,s:1+Math.random()*2}));
-  score = 0;
-  gameOver = false;
-  paused = false;
-  shootCooldown = 0;
-  groupShooting = false;
-  currentShotIndex = 0;
-
+  score=0; gameOver=false; paused=false; shootCooldown=0; groupShooting=false; currentShotIndex=0;
   updateUI();
 }
 
@@ -386,32 +195,6 @@ function rebirth(){
   alert("Rebirth complete! +50 gems!");
   rebirthBtn.style.display="none";
 }
-function buyArmor(){
-  if(gems < 20) return alert("Not enough gems!");
-  if(armorOn) return alert("Armor already active!");
-  gems -= 20;
-  armorOn = true;
-  saveProgress();
-  updateUI();
-}
-
-function buyDoubleDamage(){
-  if(gems < 30) return alert("Not enough gems!");
-  if(doubleDamageOn) return alert("Already active!");
-  gems -= 30;
-  doubleDamageOn = true;
-  saveProgress();
-  updateUI();
-}
-
-function buySlowEnemies(){
-  if(gems < 25) return alert("Not enough gems!");
-  if(slowEnemiesOn) return alert("Already active!");
-  gems -= 25;
-  slowEnemiesOn = true;
-  saveProgress();
-  updateUI();
-}
 
 // Oppdater UI
 function updateUI(){
@@ -420,8 +203,6 @@ function updateUI(){
   document.getElementById("gems").innerText=`Gems: ${gems}`;
   unlockBtn.style.display = (score>=1000 && !hasGun) ? "block" : "none";
 }
-document.getElementById("boosters").innerText =
-  `Armor: ${armorOn ? "ON" : "OFF"} | 2x DMG: ${doubleDamageOn ? "ON" : "OFF"} | Slow: ${slowEnemiesOn ? "ON" : "OFF"}`;
 
 // Input
 document.addEventListener("keydown", e=>{
@@ -437,7 +218,7 @@ function spawnEnemy(){
   for(let i=0;i<spawnCount;i++){
     const r=Math.random();
     if(r<0.75){
-      enemies.push({x:Math.random()*370,y:-40,w:30,h:30,speedY: (1.8 + score/2000) * GAME_SPEED * (slowEnemiesOn ? 0.7 : 1),speedX:0,hp:1,color:'#f44', coins:10});
+      enemies.push({x:Math.random()*370,y:-40,w:30,h:30,speedY:(1.8 + score/2000)*GAME_SPEED,speedX:0,hp:1,color:'#f44', coins:10});
     } else if(r<0.95){
       const left=Math.random()<0.5;
       enemies.push({x:left?-40:440,y:Math.random()*250,w:35,h:35,speedY:1.5*GAME_SPEED,speedX:left?2.5*GAME_SPEED:-2.5*GAME_SPEED,hp:1,color:'#fa0', coins:10});
@@ -498,7 +279,7 @@ function update(){
     enemies.forEach((e,ei)=>{
       if(b.x<e.x+e.w && b.x+b.w>e.x && b.y<e.y+e.h && b.y+b.h>e.y){
         explode(e.x+e.w/2,e.y+e.h/2);
-        e.hp -= doubleDamageOn ? 2 : 1; bullets.splice(bi,1);
+        e.hp--; bullets.splice(bi,1);
         if(e.hp<=0){
           enemies.splice(ei,1);
           coins += e.coins;
@@ -511,11 +292,7 @@ function update(){
 
   enemies.forEach(e=>{
     if(player.x<e.x+e.w && player.x+player.width>e.x && player.y<e.y+e.h && player.y+player.height>e.y){
-      player.hp--;
-
-if(player.hp <= 0){
-  gameOver = true;
-}
+      gameOver=true;
       if(score>highscore){ highscore=score; localStorage.setItem('hard_highscore',highscore); }
     }
   });
@@ -528,15 +305,9 @@ if(player.hp <= 0){
 }
 
 function draw(){
-  ctx.fillRect(player.x,player.y,player.width,player.height);
   ctx.clearRect(0,0,400,600);
   stars.forEach(s=>{ ctx.fillStyle='white'; ctx.fillRect(s.x,s.y,2,2); });
-  const skinColors = {
-  green: "#00ff00",
-  purple: "#a020f0",
-  gold: "gold"
-};
-ctx.fillStyle = skinColors[activeSkin] || "#0f0"; ctx.fillRect(player.x,player.y,player.width,player.height);
+  ctx.fillStyle='#0f0'; ctx.fillRect(player.x,player.y,player.width,player.height);
   ctx.fillStyle='white'; bullets.forEach(b=>ctx.fillRect(b.x,b.y,b.w,b.h));
   enemies.forEach(e=>{
     ctx.fillStyle=e.color; ctx.fillRect(e.x,e.y,e.w,e.h);
