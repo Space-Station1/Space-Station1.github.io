@@ -97,22 +97,6 @@ let highscore = Number(localStorage.getItem("hard_highscore")) || 0;
 let gems = Number(localStorage.getItem("gems")) || 0;
 
 let hasGun = localStorage.getItem("hasGun") === "true";
-// ===== SAFE SHOP + BOOSTER BASE =====
-
-// Boosters definert fra start (ingen undefined)
-let boosters = {
-  armor: false,
-  doubleDamage: false,
-  slowEnemies: false
-};
-
-  boosters.armor = false;
-  boosters.doubleDamage = false;
-  boosters.slowEnemies = false;
-
-  saveProgress();
-  updateUI();
-  alert("Data reset!");
 }
 
 // Våpensystem
