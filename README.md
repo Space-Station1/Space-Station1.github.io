@@ -68,7 +68,13 @@ function movePlayerToTouch(e){
     player.x = canvas.width - player.width;
 }
 const ui = document.querySelector(".ui");
-
+<div id="shop">
+  <h3>Shop</h3>
+  <button onclick="buyBooster('armor')">Armor (50 coins)</button>
+  <button onclick="buyBooster('doubleDamage')">2x Damage (75 coins)</button>
+  <button onclick="buyBooster('slowEnemies')">Slow Enemies (100 coins)</button>
+</div>
+  
 const hideBtn = document.createElement("button");
 hideBtn.textContent = "Hide UI";
 ui.prepend(hideBtn);
