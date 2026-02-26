@@ -1,8 +1,7 @@
-<!DOCTYPE html>
 <html lang="no">
 <head>
 <meta charset="UTF-8">
-<title>Space Station - Fixed</title>
+<title>Space Station - High Speed</title>
 <style>
     body { margin:0; background:black; color:white; display:flex; justify-content:center; align-items:center; height:100vh; font-family:Arial; overflow:hidden; }
     canvas { background:#05080f; border:2px solid #4af; max-width: 100vw; max-height: 100vh; }
@@ -41,13 +40,15 @@
 const canvas = document.getElementById("game");
 const ctx = canvas.getContext("2d");
 
-let player, enemies, bullets, stars, explosions;
+// --- HASTIGHETS-KONTROLL ---
+const SPEED_BOOST = 1.3; // Skru opp denne for enda mer fart (f.eks 1.5)
+
+let player, enemies, bullets, stars;
 let score = 0, gameOver = false, paused = false;
 let keys = {};
 let uiVisible = true;
 let gemMilestone = 1000;
 
-// Lagring
 let coins = Number(localStorage.getItem("coins")) || 0;
 let gems = Number(localStorage.getItem("gems")) || 10;
 let upgradeLevel = Number(localStorage.getItem("upgradeLevel")) || 0;
@@ -55,7 +56,7 @@ let hasGun = localStorage.getItem("hasGun") === "true";
 let highscore = Number(localStorage.getItem("highscore")) || 0;
 
 let boosters = { armor: false, doubleDamage: false, slowEnemies: false };
-const cooldownSettings = [30, 20, 15, 10, 7, 4];
+const cooldownSettings = [25, 18, 12, 8, 5, 3]; // Raskere skuddfrekvens
 let shootCooldown = 0;
 
 function toggleUI() {
@@ -90,9 +91,9 @@ function buyBooster(type, cost) {
 
 function init() {
     boosters = { armor: false, doubleDamage: false, slowEnemies: false };
-    player = { x: 180, y: 540, width: 35, height: 35, speed: 6, armorUsed: false };
-    enemies = []; bullets = []; explosions = [];
-    stars = Array.from({length:50}, () => ({x: Math.random()*400, y: Math.random()*600, s: 1+Math.random()*2}));
+    player = { x: 180, y: 540, width: 35, height: 35, speed: 7 * SPEED_BOOST, armorUsed: false };
+    enemies = []; bullets = [];
+    stars = Array.from({length:50}, () => ({x: Math.random()*400, y: Math.random()*600, s: (1+Math.random()*2) * SPEED_BOOST}));
     score = 0; gemMilestone = 1000;
     gameOver = false; paused = false;
     updateUI();
@@ -112,10 +113,10 @@ function upgradeWeapon() {
 function spawnEnemy() {
     if (paused || gameOver) return;
     const r = Math.random();
-    if (r < 0.85) {
-        enemies.push({x: Math.random()*370, y: -40, w: 30, h: 30, speedY: (2 + score/5000), hp: 1, color: '#f44', coins: 10});
+    if (r < 0.82) {
+        enemies.push({x: Math.random()*370, y: -40, w: 30, h: 30, speedY: (2.5 + score/4000) * SPEED_BOOST, hp: 1, color: '#f44', coins: 10});
     } else {
-        enemies.push({x: Math.random()*300, y: -80, w: 60, h: 50, speedY: 1, hp: 5, color: '#a4f', coins: 50, isBoss: true});
+        enemies.push({x: Math.random()*300, y: -80, w: 60, h: 50, speedY: 1.2 * SPEED_BOOST, hp: 5, color: '#a4f', coins: 50, isBoss: true});
     }
 }
 
@@ -124,13 +125,11 @@ function update() {
 
     stars.forEach(s => { s.y += s.s; if(s.y > 600) s.y = 0; });
 
-    // Bevegelse med begrensning (BANEN)
     if ((keys['a'] || keys['arrowleft']) && player.x > 0) player.x -= player.speed;
-    if ((keys['d'] || keys['arrowright']) && player.x < canvas.width - player.width) player.x += player.speed;
+    if ((keys['d'] || keys['arrowright']) && player.x < 400 - player.width) player.x += player.speed;
 
-    // Skyting
     if (hasGun && shootCooldown <= 0) {
-        bullets.push({x: player.x + player.width/2 - 3, y: player.y, w: 6, h: 12, speed: 10});
+        bullets.push({x: player.x + player.width/2 - 3, y: player.y, w: 6, h: 12, speed: 12 * SPEED_BOOST});
         shootCooldown = cooldownSettings[upgradeLevel];
     }
     if (shootCooldown > 0) shootCooldown--;
@@ -144,7 +143,6 @@ function update() {
     enemies.forEach((e, ei) => {
         e.y += e.speedY * speedMult;
         
-        // Kollisjon Spiller
         if (player.x < e.x + e.w && player.x + player.width > e.x && player.y < e.y + e.h && player.y + player.height > e.y) {
             if (boosters.armor && !player.armorUsed) {
                 player.armorUsed = true;
@@ -155,7 +153,6 @@ function update() {
             }
         }
 
-        // Treff av kuler
         bullets.forEach((b, bi) => {
             if (b.x < e.x + e.w && b.x + b.w > e.x && b.y < e.y + e.h && b.y + b.h > e.y) {
                 e.hp -= (boosters.doubleDamage ? 2 : 1);
@@ -171,24 +168,18 @@ function update() {
         if (e.y > 600) enemies.splice(ei, 1);
     });
 
-    score += 0.2;
+    score += 0.3 * SPEED_BOOST;
     if (score >= gemMilestone) { gems += 1; gemMilestone += 1000; updateUI(); saveProgress(); }
 }
 
 function draw() {
     ctx.clearRect(0,0,400,600);
-    
     stars.forEach(s => { ctx.fillStyle='white'; ctx.fillRect(s.x,s.y,2,2); });
-    
-    // Tegn spiller
     ctx.fillStyle = (boosters.armor && !player.armorUsed) ? '#4af' : '#0f0';
     ctx.fillRect(player.x, player.y, player.width, player.height);
-    
     bullets.forEach(b => { ctx.fillStyle = boosters.doubleDamage ? 'orange' : 'yellow'; ctx.fillRect(b.x, b.y, b.w, b.h); });
-    
     enemies.forEach(e => { ctx.fillStyle = e.color; ctx.fillRect(e.x, e.y, e.w, e.h); });
 
-    // --- SCORE VISNING ---
     ctx.fillStyle = 'white';
     ctx.font = 'bold 18px Arial';
     ctx.fillText(`Score: ${Math.floor(score)}`, 15, 30);
@@ -212,7 +203,8 @@ canvas.addEventListener("touchmove", e => {
 }, {passive: false});
 
 init();
-setInterval(spawnEnemy, 1000);
+// Endret intervall fra 1000 til 700 for raskere spawning
+setInterval(spawnEnemy, 700);
 function restartGame() { init(); }
 (function loop(){ update(); draw(); requestAnimationFrame(loop); })();
 </script>
