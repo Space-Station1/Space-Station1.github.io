@@ -1,7 +1,7 @@
 <html lang="no">
 <head>
 <meta charset="UTF-8">
-<title>Space Station - Full Game</title>
+<title>Space Station - Full Game Fixed</title>
 <style>
     body { margin:0; background:black; color:white; display:flex; justify-content:center; align-items:center; height:100vh; font-family:Arial; overflow:hidden; }
     canvas { background:#05080f; border:2px solid #4af; max-width: 100vw; max-height: 100vh; }
@@ -29,11 +29,11 @@
         <button onclick="togglePause()">Pause (P)</button>
         <button onclick="restartGame()">Restart (R)</button>
         <button id="unlockBtn" onclick="unlockGun()">Lås opp våpen (100c)</button>
-        <button onclick="upgradeWeapon()">Oppgrader (Vinsten)</button>
+        <button onclick="upgradeWeapon()">Oppgrader våpen</button>
         <button id="rebirthBtn" onclick="rebirth()" style="display:none; background: gold; color: black;">Rebirth!</button>
         
         <div id="shop">
-            <strong style="font-size: 11px; color: #4af;">SHOP (1 RUNDE)</strong>
+            <strong style="font-size: 11px; color: #4af;">SHOP (VARER 1 RUNDE)</strong>
             <button onclick="buyBooster('armor', 5)">🛡️ Armor (5 Gems)</button>
             <button onclick="buyBooster('doubleDamage', 10)">🔥 2x Dmg (10 Gems)</button>
             <button onclick="buyBooster('slowEnemies', 15)">❄️ Slow (15 Gems)</button>
@@ -48,15 +48,15 @@
 const canvas = document.getElementById("game");
 const ctx = canvas.getContext("2d");
 
-// Spill-variabler
-let player, enemies, bullets, explosions, stars;
+let player, enemies, bullets, stars;
 let score, gameOver=false, paused=false;
 let keys={};
 let uiVisible = true;
+let gemMilestone = 1000; // Poengsum for å få neste gratis gem
 
-// Progresjon (hentes fra minnet)
+// Progresjon
 let coins = Number(localStorage.getItem("coins")) || 0;
-let gems = Number(localStorage.getItem("gems")) || 10; // Starter med 10 gems for test
+let gems = Number(localStorage.getItem("gems")) || 10;
 let upgradeLevel = Number(localStorage.getItem("upgradeLevel")) || 0;
 let hasGun = localStorage.getItem("hasGun") === "true";
 let highscore = Number(localStorage.getItem("highscore")) || 0;
@@ -64,7 +64,6 @@ let highscore = Number(localStorage.getItem("highscore")) || 0;
 // Boosters (Nullstilles i init())
 let boosters = { armor: false, doubleDamage: false, slowEnemies: false };
 
-// Våpeninnstillinger
 const cooldownSettings = [30, 20, 15, 10, 7, 4];
 let shootCooldown = 0;
 
@@ -91,7 +90,7 @@ function updateUI() {
 }
 
 function buyBooster(type, cost) {
-    if (boosters[type]) return alert("Allerede aktiv!");
+    if (boosters[type]) return alert("Allerede aktiv i denne runden!");
     if (gems >= cost) {
         gems -= cost;
         boosters[type] = true;
@@ -103,13 +102,13 @@ function buyBooster(type, cost) {
 }
 
 function init() {
-    // Nullstill boosters ved hver runde-start
+    // Nullstiller boosters for den nye runden
     boosters = { armor: false, doubleDamage: false, slowEnemies: false };
+    gemMilestone = 1000;
     
     player = { x: 180, y: 540, width: 35, height: 35, speed: 6, armorUsed: false };
     enemies = [];
     bullets = [];
-    explosions = [];
     stars = Array.from({length:60}, () => ({x: Math.random()*400, y: Math.random()*600, s: 1+Math.random()*2}));
     score = 0;
     gameOver = false;
@@ -122,6 +121,7 @@ function togglePause() { if(!gameOver) paused = !paused; }
 
 function unlockGun() {
     if (coins >= 100) { coins -= 100; hasGun = true; saveProgress(); updateUI(); }
+    else { alert("Du trenger 100 coins!"); }
 }
 
 function upgradeWeapon() {
@@ -138,7 +138,7 @@ function rebirth() {
     }
 }
 
-function resetData() { if(confirm("Slette alt?")) { localStorage.clear(); location.reload(); } }
+function resetData() { if(confirm("Er du sikker på at du vil slette alt?")) { localStorage.clear(); location.reload(); } }
 
 function spawnEnemy() {
     if (paused || gameOver) return;
@@ -155,11 +155,11 @@ function update() {
 
     stars.forEach(s => { s.y += s.s; if(s.y > 600) s.y = 0; });
 
-    // Styre med taster
+    // Taster
     if ((keys['a'] || keys['arrowleft']) && player.x > 0) player.x -= player.speed;
     if ((keys['d'] || keys['arrowright']) && player.x < 365) player.x += player.speed;
 
-    // Skyting
+    // Automatisk skyting
     if (hasGun && shootCooldown <= 0) {
         bullets.push({x: player.x + player.width/2 - 3, y: player.y, w: 6, h: 12, speed: 10});
         shootCooldown = cooldownSettings[upgradeLevel];
@@ -175,7 +175,7 @@ function update() {
     enemies.forEach((e, ei) => {
         e.y += e.speedY * speedMult;
         
-        // Kollisjon med spiller
+        // Sjekk kollisjon med spiller
         if (player.x < e.x + e.w && player.x + player.width > e.x && player.y < e.y + e.h && player.y + player.height > e.y) {
             if (boosters.armor && !player.armorUsed) {
                 player.armorUsed = true;
@@ -186,7 +186,7 @@ function update() {
             }
         }
 
-        // Treff av kuler
+        // Sjekk treff av kuler
         bullets.forEach((b, bi) => {
             if (b.x < e.x + e.w && b.x + b.w > e.x && b.y < e.y + e.h && b.y + b.h > e.y) {
                 e.hp -= (boosters.doubleDamage ? 2 : 1);
@@ -203,14 +203,23 @@ function update() {
         if (e.y > 600) enemies.splice(ei, 1);
     });
 
+    // Score økning og Gem-belønning
     score += 0.2;
+    if (score >= gemMilestone) {
+        gems += 1;
+        gemMilestone += 1000;
+        updateUI();
+        saveProgress();
+    }
 }
 
 function draw() {
     ctx.clearRect(0,0,400,600);
+    
+    // Stjerner
     stars.forEach(s => { ctx.fillStyle='white'; ctx.fillRect(s.x,s.y,2,2); });
     
-    // Spiller
+    // Spiller (Blå nyanse hvis armor er aktiv)
     ctx.fillStyle = (boosters.armor && !player.armorUsed) ? '#4af' : '#0f0';
     ctx.fillRect(player.x, player.y, player.width, player.height);
     
@@ -224,15 +233,20 @@ function draw() {
         ctx.fillRect(e.x, e.y, e.w, e.h);
     });
     
+    // --- SCORE OG HIGHSCORE ---
+    ctx.fillStyle = 'white';
+    ctx.font = '16px Arial';
+    ctx.fillText(`Score: ${Math.floor(score)}`, 10, 25);
+    ctx.fillText(`Highscore: ${highscore}`, 10, 45);
+    
     if (paused) { ctx.fillStyle='white'; ctx.font='30px Arial'; ctx.fillText('PAUSE', 150, 300); }
     if (gameOver) { ctx.fillStyle='red'; ctx.font='30px Arial'; ctx.fillText('GAME OVER', 110, 300); }
 }
 
-// Kontroller
 window.addEventListener("keydown", e => keys[e.key.toLowerCase()] = true);
 window.addEventListener("keyup", e => keys[e.key.toLowerCase()] = false);
 
-// Touch for mobil
+// Touch-kontroll for mobil
 canvas.addEventListener("touchmove", e => {
     e.preventDefault();
     let rect = canvas.getBoundingClientRect();
@@ -240,7 +254,6 @@ canvas.addEventListener("touchmove", e => {
     player.x = x - player.width / 2;
 }, {passive: false});
 
-// Start
 init();
 setInterval(spawnEnemy, 1000);
 (function loop(){ update(); draw(); requestAnimationFrame(loop); })();
