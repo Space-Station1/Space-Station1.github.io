@@ -1,7 +1,7 @@
 <html lang="no">
 <head>
 <meta charset="UTF-8">
-<title>Space Station - High Speed</title>
+<title>Space Station - Extreme Mode</title>
 <style>
     body { margin:0; background:black; color:white; display:flex; justify-content:center; align-items:center; height:100vh; font-family:Arial; overflow:hidden; }
     canvas { background:#05080f; border:2px solid #4af; max-width: 100vw; max-height: 100vh; }
@@ -22,6 +22,7 @@
             <div id="coinsDisplay">Coins: 0</div>
             <div id="gemsDisplay">Gems: 0</div>
         </div>
+        <button onclick="togglePause()">Pause</button>
         <button onclick="restartGame()">Restart</button>
         <button id="unlockBtn" onclick="unlockGun()">Unlock Gun (100c)</button>
         <button onclick="upgradeWeapon()">Upgrade Gun</button>
@@ -40,8 +41,7 @@
 const canvas = document.getElementById("game");
 const ctx = canvas.getContext("2d");
 
-// --- HASTIGHETS-KONTROLL ---
-const SPEED_BOOST = 1.3; // Skru opp denne for enda mer fart (f.eks 1.5)
+const SPEED_BOOST = 1.3;
 
 let player, enemies, bullets, stars;
 let score = 0, gameOver = false, paused = false;
@@ -56,7 +56,7 @@ let hasGun = localStorage.getItem("hasGun") === "true";
 let highscore = Number(localStorage.getItem("highscore")) || 0;
 
 let boosters = { armor: false, doubleDamage: false, slowEnemies: false };
-const cooldownSettings = [25, 18, 12, 8, 5, 3]; // Raskere skuddfrekvens
+const cooldownSettings = [25, 18, 12, 8, 5, 3];
 let shootCooldown = 0;
 
 function toggleUI() {
@@ -99,6 +99,9 @@ function init() {
     updateUI();
 }
 
+function togglePause() { paused = !paused; }
+function restartGame() { init(); }
+
 function unlockGun() {
     if (coins >= 100) { coins -= 100; hasGun = true; saveProgress(); updateUI(); }
 }
@@ -112,11 +115,17 @@ function upgradeWeapon() {
 
 function spawnEnemy() {
     if (paused || gameOver) return;
-    const r = Math.random();
-    if (r < 0.82) {
-        enemies.push({x: Math.random()*370, y: -40, w: 30, h: 30, speedY: (2.5 + score/4000) * SPEED_BOOST, hp: 1, color: '#f44', coins: 10});
-    } else {
-        enemies.push({x: Math.random()*300, y: -80, w: 60, h: 50, speedY: 1.2 * SPEED_BOOST, hp: 5, color: '#a4f', coins: 50, isBoss: true});
+    
+    // Økt antall fiender som kan komme samtidig (1-3 fiender per spawn)
+    const count = Math.floor(Math.random() * 3) + 1;
+    
+    for(let i = 0; i < count; i++) {
+        const r = Math.random();
+        if (r < 0.85) {
+            enemies.push({x: Math.random()*370, y: -40, w: 30, h: 30, speedY: (2.5 + score/4000) * SPEED_BOOST, hp: 1, maxHp: 1, color: '#f44', coins: 10});
+        } else {
+            enemies.push({x: Math.random()*300, y: -80, w: 60, h: 50, speedY: 1.2 * SPEED_BOOST, hp: 5, maxHp: 5, color: '#a4f', coins: 50, isBoss: true});
+        }
     }
 }
 
@@ -175,10 +184,24 @@ function update() {
 function draw() {
     ctx.clearRect(0,0,400,600);
     stars.forEach(s => { ctx.fillStyle='white'; ctx.fillRect(s.x,s.y,2,2); });
+    
     ctx.fillStyle = (boosters.armor && !player.armorUsed) ? '#4af' : '#0f0';
     ctx.fillRect(player.x, player.y, player.width, player.height);
+    
     bullets.forEach(b => { ctx.fillStyle = boosters.doubleDamage ? 'orange' : 'yellow'; ctx.fillRect(b.x, b.y, b.w, b.h); });
-    enemies.forEach(e => { ctx.fillStyle = e.color; ctx.fillRect(e.x, e.y, e.w, e.h); });
+    
+    enemies.forEach(e => {
+        ctx.fillStyle = e.color;
+        ctx.fillRect(e.x, e.y, e.w, e.h);
+        
+        // HP Bar for store fiender (Bosses)
+        if(e.isBoss) {
+            ctx.fillStyle = 'red';
+            ctx.fillRect(e.x, e.y - 10, e.w, 5);
+            ctx.fillStyle = '#0f0';
+            ctx.fillRect(e.x, e.y - 10, e.w * (e.hp / e.maxHp), 5);
+        }
+    });
 
     ctx.fillStyle = 'white';
     ctx.font = 'bold 18px Arial';
@@ -186,8 +209,16 @@ function draw() {
     ctx.font = '14px Arial';
     ctx.fillText(`Highscore: ${highscore}`, 15, 50);
     
-    if (paused) { ctx.font='30px Arial'; ctx.fillText('PAUSE', 150, 300); }
-    if (gameOver) { ctx.fillStyle='red'; ctx.font='30px Arial'; ctx.fillText('GAME OVER', 110, 300); }
+    if (paused) { 
+        ctx.fillStyle='white';
+        ctx.font='30px Arial'; 
+        ctx.fillText('PAUSE', 150, 300); 
+    }
+    if (gameOver) { 
+        ctx.fillStyle='red'; 
+        ctx.font='30px Arial'; 
+        ctx.fillText('GAME OVER', 110, 300); 
+    }
 }
 
 window.addEventListener("keydown", e => keys[e.key.toLowerCase()] = true);
@@ -203,9 +234,8 @@ canvas.addEventListener("touchmove", e => {
 }, {passive: false});
 
 init();
-// Endret intervall fra 1000 til 700 for raskere spawning
-setInterval(spawnEnemy, 700);
-function restartGame() { init(); }
+// Spawner fiender oftere (hvert 600ms)
+setInterval(spawnEnemy, 600);
 (function loop(){ update(); draw(); requestAnimationFrame(loop); })();
 </script>
 </body>
