@@ -26,11 +26,12 @@
         <button onclick="restartGame()">Restart</button>
         <button id="unlockBtn" onclick="unlockGun()">Unlock Gun (100c)</button>
         <button onclick="upgradeWeapon()">Upgrade Gun</button>
+        <button id="rebirthBtn" onclick="rebirth()" style="display:none; background: gold; color: black; font-weight: bold;">REBIRTH (+30 Gems)</button>
         <div id="shop">
             <strong style="font-size: 10px; color: #4af;">SHOP (1 RUNDE)</strong>
-            <button onclick="buyBooster('armor', 5)">🛡️ Armor (5g)</button>
-            <button onclick="buyBooster('doubleDamage', 10)">🔥 2x Dmg (10g)</button>
-            <button onclick="buyBooster('slowEnemies', 15)">❄️ Slow (15g)</button>
+            <button onclick="buyBooster('armor', 50)">🛡️ Armor (50g)</button>
+            <button onclick="buyBooster('doubleDamage', 50)">🔥 2x Dmg (50g)</button>
+            <button onclick="buyBooster('slowEnemies', 50)">❄️ Slow (50g)</button>
         </div>
     </div>
 </div>
@@ -47,7 +48,7 @@ let player, enemies, bullets, stars;
 let score = 0, gameOver = false, paused = false;
 let keys = {};
 let uiVisible = true;
-let gemMilestone = 1000;
+let gemMilestone = 10000;
 
 let coins = Number(localStorage.getItem("coins")) || 0;
 let gems = Number(localStorage.getItem("gems")) || 10;
@@ -69,6 +70,7 @@ function updateUI() {
     document.getElementById("coinsDisplay").innerText = `Coins: ${Math.floor(coins)}`;
     document.getElementById("gemsDisplay").innerText = `Gems: ${gems}`;
     document.getElementById("unlockBtn").style.display = hasGun ? "none" : "block";
+    document.getElementById("rebirthBtn").style.display = (upgradeLevel >= 5) ? "block" : "none";
 }
 
 function saveProgress() {
@@ -94,7 +96,7 @@ function init() {
     player = { x: 180, y: 540, width: 35, height: 35, speed: 7 * SPEED_BOOST, armorUsed: false };
     enemies = []; bullets = [];
     stars = Array.from({length:50}, () => ({x: Math.random()*400, y: Math.random()*600, s: (1+Math.random()*2) * SPEED_BOOST}));
-    score = 0; gemMilestone = 1000;
+    score = 0; gemMilestone = 10000;
     gameOver = false; paused = false;
     updateUI();
 }
@@ -113,12 +115,21 @@ function upgradeWeapon() {
     }
 }
 
+function rebirth() {
+    if (upgradeLevel >= 5) {
+        gems += 30;
+        upgradeLevel = 0;
+        hasGun = false;
+        coins = 100; // Starter med 100 coins etter rebirth
+        saveProgress();
+        updateUI();
+        alert("Rebirth utført! +30 Gems og alt er resatt.");
+    }
+}
+
 function spawnEnemy() {
     if (paused || gameOver) return;
-    
-    // Økt antall fiender som kan komme samtidig (1-3 fiender per spawn)
     const count = Math.floor(Math.random() * 3) + 1;
-    
     for(let i = 0; i < count; i++) {
         const r = Math.random();
         if (r < 0.85) {
@@ -178,7 +189,12 @@ function update() {
     });
 
     score += 0.3 * SPEED_BOOST;
-    if (score >= gemMilestone) { gems += 1; gemMilestone += 1000; updateUI(); saveProgress(); }
+    if (score >= gemMilestone) { 
+        gems += 1; 
+        gemMilestone += 10000; 
+        updateUI(); 
+        saveProgress(); 
+    }
 }
 
 function draw() {
@@ -193,8 +209,6 @@ function draw() {
     enemies.forEach(e => {
         ctx.fillStyle = e.color;
         ctx.fillRect(e.x, e.y, e.w, e.h);
-        
-        // HP Bar for store fiender (Bosses)
         if(e.isBoss) {
             ctx.fillStyle = 'red';
             ctx.fillRect(e.x, e.y - 10, e.w, 5);
@@ -234,7 +248,6 @@ canvas.addEventListener("touchmove", e => {
 }, {passive: false});
 
 init();
-// Spawner fiender oftere (hvert 600ms)
 setInterval(spawnEnemy, 600);
 (function loop(){ update(); draw(); requestAnimationFrame(loop); })();
 </script>
