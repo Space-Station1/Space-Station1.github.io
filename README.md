@@ -1,7 +1,7 @@
 <html lang="no">
 <head>
 <meta charset="UTF-8">
-<title>Space Station - Side Boss Edition</title>
+<title>Space Station - Score Unlock Edition</title>
 <style>
     body { margin:0; background:black; color:white; display:flex; justify-content:center; align-items:center; height:100vh; font-family:Arial; overflow:hidden; }
     canvas { background:#05080f; border:2px solid #4af; max-width: 100vw; max-height: 100vh; }
@@ -79,14 +79,14 @@ function updateUI() {
     document.getElementById("coinsDisplay").innerText = `Coins: ${Math.floor(coins)}`;
     document.getElementById("gemsDisplay").innerText = `Gems: ${gems}`;
     
-    // Unlock Gun Knapp Logikk
+    // Unlock Gun Knapp Logikk basert på nåværende SCORE
     const unlockBtn = document.getElementById("unlockBtn");
     if (hasGun) {
         unlockBtn.style.display = "none";
     } else {
         unlockBtn.style.display = "block";
-        if (highscore < 1000) {
-            unlockBtn.innerText = "Lås opp (Trenger 1000 score)";
+        if (score < 1000) {
+            unlockBtn.innerText = `Unlock (Trenger 1000 score)`;
             unlockBtn.style.opacity = "0.6";
         } else {
             unlockBtn.innerText = "Unlock Gun (100c)";
@@ -144,8 +144,8 @@ function togglePause() { paused = !paused; }
 function restartGame() { init(); }
 
 function unlockGun() {
-    if (highscore < 1000) {
-        alert("Du må nå en Highscore på 1000 før du kan kjøpe våpen!");
+    if (score < 1000) {
+        alert("Du må nå 1000 poeng i denne runden før du kan kjøpe våpen!");
         return;
     }
     if (coins >= 100) { 
@@ -254,6 +254,9 @@ function update() {
         updateUI(); 
         saveProgress(); 
     }
+    
+    // Oppdaterer knappen hver frame så man ser score-kravet endre seg
+    updateUI();
 }
 
 function draw() {
