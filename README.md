@@ -1,3 +1,4 @@
+<!DOCTYPE html>
 <html lang="no">
 <head>
 <meta charset="UTF-8">
@@ -53,8 +54,15 @@ let keys = {};
 let uiVisible = true;
 let gemMilestone = 10000;
 
-let coins = Number(localStorage.getItem("coins")) || 0;
-let gems = Number(localStorage.getItem("gems")) || 10;
+// Sjekker om det er første gang spillet kjøres
+if (localStorage.getItem("hasPlayedBefore") === null) {
+    localStorage.setItem("coins", 100); // Start med 100 coins
+    localStorage.setItem("gems", 10);   // Start med 10 gems
+    localStorage.setItem("hasPlayedBefore", "true");
+}
+
+let coins = Number(localStorage.getItem("coins"));
+let gems = Number(localStorage.getItem("gems"));
 let upgradeLevel = Number(localStorage.getItem("upgradeLevel")) || 0;
 let hasGun = localStorage.getItem("hasGun") === "true";
 let highscore = Number(localStorage.getItem("highscore")) || 0;
@@ -139,11 +147,11 @@ function rebirth() {
         gems += 30;
         upgradeLevel = 0;
         hasGun = false;
-        coins = 100;
+        coins = 100; // Starter med 100 coins
         saveProgress();
         updateUI();
         init();
-        alert("Rebirth utført! +30 Gems.");
+        alert("Rebirth utført! +30 Gems og 100 start-coins.");
     }
 }
 
@@ -153,10 +161,8 @@ function spawnEnemy() {
     for(let i = 0; i < count; i++) {
         const r = Math.random();
         if (r < 0.85) {
-            // Vanlige fiender (ovenfra)
             enemies.push({x: Math.random()*370, y: -40, w: 30, h: 30, speedY: (2.5 + score/4000) * SPEED_BOOST, speedX: 0, hp: 1, maxHp: 1, color: '#f44', coins: 10, isBoss: false});
         } else {
-            // Bosser (fra sidene)
             const fromLeft = Math.random() > 0.5;
             enemies.push({
                 x: fromLeft ? -70 : 410, 
@@ -172,7 +178,6 @@ function spawnEnemy() {
 
 function update() {
     if (gameOver || paused) return;
-
     stars.forEach(s => { s.y += s.s; if(s.y > 600) s.y = 0; });
 
     if ((keys['a'] || keys['arrowleft']) && player.x > 0) player.x -= player.speed;
@@ -216,7 +221,6 @@ function update() {
                 }
             }
         });
-        // Fjern fiender som går utfor banen (sider eller bunn)
         if (e.y > 600 || e.x > 500 || e.x < -100) enemies.splice(ei, 1);
     });
 
@@ -232,51 +236,31 @@ function update() {
 function draw() {
     ctx.clearRect(0,0,400,600);
     stars.forEach(s => { ctx.fillStyle='white'; ctx.fillRect(s.x,s.y,2,2); });
-    
     ctx.fillStyle = (boosters.armor && !player.armorUsed) ? '#4af' : '#0f0';
     ctx.fillRect(player.x, player.y, player.width, player.height);
-    
     bullets.forEach(b => { ctx.fillStyle = boosters.doubleDamage ? 'orange' : 'yellow'; ctx.fillRect(b.x, b.y, b.w, b.h); });
-    
     enemies.forEach(e => {
-        ctx.fillStyle = e.color;
-        ctx.fillRect(e.x, e.y, e.w, e.h);
+        ctx.fillStyle = e.color; ctx.fillRect(e.x, e.y, e.w, e.h);
         if(e.isBoss) {
-            ctx.fillStyle = 'red';
-            ctx.fillRect(e.x, e.y - 10, e.w, 5);
-            ctx.fillStyle = '#0f0';
-            ctx.fillRect(e.x, e.y - 10, e.w * (e.hp / e.maxHp), 5);
+            ctx.fillStyle = 'red'; ctx.fillRect(e.x, e.y - 10, e.w, 5);
+            ctx.fillStyle = '#0f0'; ctx.fillRect(e.x, e.y - 10, e.w * (e.hp / e.maxHp), 5);
         }
     });
-
-    ctx.fillStyle = 'white';
-    ctx.font = 'bold 18px Arial';
+    ctx.fillStyle = 'white'; ctx.font = 'bold 18px Arial';
     ctx.fillText(`Score: ${Math.floor(score)}`, 15, 30);
-    ctx.font = '14px Arial';
-    ctx.fillText(`Highscore: ${highscore}`, 15, 50);
-    
-    if (paused) { 
-        ctx.fillStyle='white';
-        ctx.font='30px Arial'; 
-        ctx.fillText('PAUSE', 150, 300); 
-    }
-    if (gameOver) { 
-        ctx.fillStyle='red'; 
-        ctx.font='30px Arial'; 
-        ctx.fillText('GAME OVER', 110, 300); 
-    }
+    ctx.font = '14px Arial'; ctx.fillText(`Highscore: ${highscore}`, 15, 50);
+    if (paused) { ctx.font='30px Arial'; ctx.fillText('PAUSE', 150, 300); }
+    if (gameOver) { ctx.fillStyle='red'; ctx.font='30px Arial'; ctx.fillText('GAME OVER', 110, 300); }
 }
 
 window.addEventListener("keydown", e => keys[e.key.toLowerCase()] = true);
 window.addEventListener("keyup", e => keys[e.key.toLowerCase()] = false);
-
 canvas.addEventListener("touchmove", e => {
     e.preventDefault();
     let rect = canvas.getBoundingClientRect();
     let x = e.touches[0].clientX - rect.left;
     player.x = x - player.width / 2;
-    if(player.x < 0) player.x = 0;
-    if(player.x > 365) player.x = 365;
+    if(player.x < 0) player.x = 0; if(player.x > 365) player.x = 365;
 }, {passive: false});
 
 init();
