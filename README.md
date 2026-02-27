@@ -1,11 +1,11 @@
 <html lang="no">
 <head>
 <meta charset="UTF-8">
-<title>Space Station - Score Unlock Edition</title>
+<title>Space Station - Extreme Mode</title>
 <style>
     body { margin:0; background:black; color:white; display:flex; justify-content:center; align-items:center; height:100vh; font-family:Arial; overflow:hidden; }
     canvas { background:#05080f; border:2px solid #4af; max-width: 100vw; max-height: 100vh; }
-    .ui { position:absolute; top:10px; right:10px; display:flex; flex-direction:column; gap:5px; z-index:10; width: 160px; background: rgba(0,0,0,0.7); padding: 10px; border-radius: 8px; border: 1px solid #4af; }
+    .ui { position:absolute; top:10px; right:10px; display:flex; flex-direction:column; gap:5px; z-index:10; width: 170px; background: rgba(0,0,0,0.7); padding: 10px; border-radius: 8px; border: 1px solid #4af; }
     button { padding:8px; font-size:12px; cursor:pointer; background: #222; color: white; border: 1px solid #4af; border-radius: 4px; width: 100%; }
     button:active { background: #4af; }
     #shop { margin-top: 10px; border-top: 1px solid #4af; padding-top: 10px; display: flex; flex-direction: column; gap: 5px; }
@@ -52,6 +52,7 @@ let score = 0, gameOver = false, paused = false;
 let keys = {};
 let uiVisible = true;
 let gemMilestone = 10000;
+let enemyExtraSpawn = 0; // Hvor mange EKSTRA fiender som kommer
 
 if (localStorage.getItem("hasPlayedBefore") === null) {
     localStorage.setItem("coins", 100);
@@ -79,22 +80,17 @@ function updateUI() {
     document.getElementById("coinsDisplay").innerText = `Coins: ${Math.floor(coins)}`;
     document.getElementById("gemsDisplay").innerText = `Gems: ${gems}`;
     
-    // Unlock Gun Knapp Logikk basert på nåværende SCORE
     const unlockBtn = document.getElementById("unlockBtn");
     if (hasGun) {
         unlockBtn.style.display = "none";
     } else {
         unlockBtn.style.display = "block";
-        if (score < 1000) {
-            unlockBtn.innerText = `Unlock (Trenger 1000 score)`;
-            unlockBtn.style.opacity = "0.6";
-        } else {
-            unlockBtn.innerText = "Unlock Gun (100c)";
-            unlockBtn.style.opacity = "1";
-        }
+        unlockBtn.innerText = score < 1000 ? "Lås opp (Trenger 1000 score)" : "Unlock Gun (100c)";
+        unlockBtn.style.opacity = score < 1000 ? "0.6" : "1";
     }
     
-    const upgradeCost = 200 * upgradeLevel + 100;
+    // Dyrere oppgraderinger: 100 -> 600 -> 1100 -> 1600...
+    const upgradeCost = 500 * upgradeLevel + 100;
     const upgradeBtn = document.getElementById("upgradeBtn");
     if (upgradeLevel >= 5) {
         upgradeBtn.innerText = "Max Upgrade";
@@ -135,8 +131,11 @@ function init() {
     player = { x: 180, y: 540, width: 35, height: 35, speed: 7 * SPEED_BOOST, armorUsed: false };
     enemies = []; bullets = [];
     stars = Array.from({length:50}, () => ({x: Math.random()*400, y: Math.random()*600, s: (1+Math.random()*2) * SPEED_BOOST}));
-    score = 0; gemMilestone = 10000;
-    gameOver = false; paused = false;
+    score = 0; 
+    gemMilestone = 10000;
+    enemyExtraSpawn = 0; // Reset vanskegrad
+    gameOver = false; 
+    paused = false;
     updateUI();
 }
 
@@ -144,22 +143,12 @@ function togglePause() { paused = !paused; }
 function restartGame() { init(); }
 
 function unlockGun() {
-    if (score < 1000) {
-        alert("Du må nå 1000 poeng i denne runden før du kan kjøpe våpen!");
-        return;
-    }
-    if (coins >= 100) { 
-        coins -= 100; 
-        hasGun = true; 
-        saveProgress(); 
-        updateUI(); 
-    } else {
-        alert("Du trenger 100 coins!");
-    }
+    if (score < 1000) return alert("Nå 1000 poeng i runden først!");
+    if (coins >= 100) { coins -= 100; hasGun = true; saveProgress(); updateUI(); }
 }
 
 function upgradeWeapon() {
-    let cost = 200 * upgradeLevel + 100;
+    let cost = 500 * upgradeLevel + 100;
     if (hasGun && upgradeLevel < 5 && coins >= cost) {
         coins -= cost; upgradeLevel++; saveProgress(); updateUI();
     }
@@ -167,31 +156,28 @@ function upgradeWeapon() {
 
 function rebirth() {
     if (upgradeLevel >= 5) {
-        gems += 30;
-        upgradeLevel = 0;
-        hasGun = false;
-        coins = 100;
-        saveProgress();
-        updateUI();
-        init();
-        alert("Rebirth utført! +30 Gems.");
+        gems += 30; upgradeLevel = 0; hasGun = false; coins = 100;
+        saveProgress(); updateUI(); init();
+        alert("Rebirth! +30 Gems.");
     }
 }
 
 function spawnEnemy() {
     if (paused || gameOver) return;
-    const count = Math.floor(Math.random() * 3) + 1;
-    for(let i = 0; i < count; i++) {
+    
+    // Antall fiender som spawner: (1 til 3) + (1 per 10k score)
+    const baseCount = Math.floor(Math.random() * 3) + 1;
+    const totalToSpawn = baseCount + enemyExtraSpawn;
+
+    for(let i = 0; i < totalToSpawn; i++) {
         const r = Math.random();
         if (r < 0.85) {
             enemies.push({x: Math.random()*370, y: -40, w: 30, h: 30, speedY: (2.5 + score/4000) * SPEED_BOOST, speedX: 0, hp: 1, maxHp: 1, color: '#f44', coins: 10, isBoss: false});
         } else {
             const fromLeft = Math.random() > 0.5;
             enemies.push({
-                x: fromLeft ? -70 : 410, 
-                y: Math.random() * 200 + 50, 
-                w: 60, h: 50, 
-                speedY: 0.2 * SPEED_BOOST, 
+                x: fromLeft ? -70 : 410, y: Math.random() * 250 + 50, 
+                w: 60, h: 50, speedY: 0.2 * SPEED_BOOST, 
                 speedX: (fromLeft ? 1.5 : -1.5) * SPEED_BOOST, 
                 hp: 5, maxHp: 5, color: '#a4f', coins: 50, isBoss: true
             });
@@ -248,14 +234,16 @@ function update() {
     });
 
     score += 0.3 * SPEED_BOOST;
+    
+    // Milestones: +2 Gems og vanskeligere spawn
     if (score >= gemMilestone) { 
-        gems += 1; 
+        gems += 2; 
+        enemyExtraSpawn += 1; // +1 enemy per spawn hver 10k poeng
         gemMilestone += 10000; 
         updateUI(); 
         saveProgress(); 
     }
     
-    // Oppdaterer knappen hver frame så man ser score-kravet endre seg
     updateUI();
 }
 
@@ -275,6 +263,11 @@ function draw() {
     ctx.fillStyle = 'white'; ctx.font = 'bold 18px Arial';
     ctx.fillText(`Score: ${Math.floor(score)}`, 15, 30);
     ctx.font = '14px Arial'; ctx.fillText(`Highscore: ${highscore}`, 15, 50);
+    if (enemyExtraSpawn > 0) {
+        ctx.fillStyle = '#f44';
+        ctx.font = '10px Arial';
+        ctx.fillText(`Difficulty: +${enemyExtraSpawn} enemies`, 15, 70);
+    }
     if (paused) { ctx.font='30px Arial'; ctx.fillText('PAUSE', 150, 300); }
     if (gameOver) { ctx.fillStyle='red'; ctx.font='30px Arial'; ctx.fillText('GAME OVER', 110, 300); }
 }
