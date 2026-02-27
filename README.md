@@ -1,16 +1,17 @@
 <html lang="no">
 <head>
 <meta charset="UTF-8">
-<title>Space Station - Extreme Mode</title>
+<title>Space Station - Side Boss Edition</title>
 <style>
     body { margin:0; background:black; color:white; display:flex; justify-content:center; align-items:center; height:100vh; font-family:Arial; overflow:hidden; }
     canvas { background:#05080f; border:2px solid #4af; max-width: 100vw; max-height: 100vh; }
-    .ui { position:absolute; top:10px; right:10px; display:flex; flex-direction:column; gap:5px; z-index:10; width: 150px; background: rgba(0,0,0,0.7); padding: 10px; border-radius: 8px; border: 1px solid #4af; }
+    .ui { position:absolute; top:10px; right:10px; display:flex; flex-direction:column; gap:5px; z-index:10; width: 160px; background: rgba(0,0,0,0.7); padding: 10px; border-radius: 8px; border: 1px solid #4af; }
     button { padding:8px; font-size:12px; cursor:pointer; background: #222; color: white; border: 1px solid #4af; border-radius: 4px; width: 100%; }
     button:active { background: #4af; }
     #shop { margin-top: 10px; border-top: 1px solid #4af; padding-top: 10px; display: flex; flex-direction: column; gap: 5px; }
     .hidden { display: none !important; }
     #stats { font-size: 14px; margin-bottom: 5px; }
+    .reset-btn { border-color: #f44; color: #f44; margin-top: 10px; font-size: 10px; }
 </style>
 </head>
 <body>
@@ -25,14 +26,16 @@
         <button onclick="togglePause()">Pause</button>
         <button onclick="restartGame()">Restart</button>
         <button id="unlockBtn" onclick="unlockGun()">Unlock Gun (100c)</button>
-        <button onclick="upgradeWeapon()">Upgrade Gun</button>
+        <button id="upgradeBtn" onclick="upgradeWeapon()">Upgrade Gun</button>
         <button id="rebirthBtn" onclick="rebirth()" style="display:none; background: gold; color: black; font-weight: bold;">REBIRTH (+30 Gems)</button>
+        
         <div id="shop">
             <strong style="font-size: 10px; color: #4af;">SHOP (1 RUNDE)</strong>
             <button onclick="buyBooster('armor', 50)">🛡️ Armor (50g)</button>
             <button onclick="buyBooster('doubleDamage', 50)">🔥 2x Dmg (50g)</button>
             <button onclick="buyBooster('slowEnemies', 50)">❄️ Slow (50g)</button>
         </div>
+        <button class="reset-btn" onclick="resetGameData()">RESET ALL DATA</button>
     </div>
 </div>
 
@@ -70,6 +73,15 @@ function updateUI() {
     document.getElementById("coinsDisplay").innerText = `Coins: ${Math.floor(coins)}`;
     document.getElementById("gemsDisplay").innerText = `Gems: ${gems}`;
     document.getElementById("unlockBtn").style.display = hasGun ? "none" : "block";
+    
+    const upgradeCost = 200 * upgradeLevel + 100;
+    const upgradeBtn = document.getElementById("upgradeBtn");
+    if (upgradeLevel >= 5) {
+        upgradeBtn.innerText = "Max Upgrade";
+    } else {
+        upgradeBtn.innerText = `Upgrade Gun (${upgradeCost}c)`;
+    }
+    
     document.getElementById("rebirthBtn").style.display = (upgradeLevel >= 5) ? "block" : "none";
 }
 
@@ -79,6 +91,13 @@ function saveProgress() {
     localStorage.setItem("upgradeLevel", upgradeLevel);
     localStorage.setItem("hasGun", hasGun);
     localStorage.setItem("highscore", highscore);
+}
+
+function resetGameData() {
+    if(confirm("Vil du slette ALT? Dette kan ikke angres.")) {
+        localStorage.clear();
+        location.reload();
+    }
 }
 
 function buyBooster(type, cost) {
@@ -120,10 +139,11 @@ function rebirth() {
         gems += 30;
         upgradeLevel = 0;
         hasGun = false;
-        coins = 100; // Starter med 100 coins etter rebirth
+        coins = 100;
         saveProgress();
         updateUI();
-        alert("Rebirth utført! +30 Gems og alt er resatt.");
+        init();
+        alert("Rebirth utført! +30 Gems.");
     }
 }
 
@@ -133,9 +153,19 @@ function spawnEnemy() {
     for(let i = 0; i < count; i++) {
         const r = Math.random();
         if (r < 0.85) {
-            enemies.push({x: Math.random()*370, y: -40, w: 30, h: 30, speedY: (2.5 + score/4000) * SPEED_BOOST, hp: 1, maxHp: 1, color: '#f44', coins: 10});
+            // Vanlige fiender (ovenfra)
+            enemies.push({x: Math.random()*370, y: -40, w: 30, h: 30, speedY: (2.5 + score/4000) * SPEED_BOOST, speedX: 0, hp: 1, maxHp: 1, color: '#f44', coins: 10, isBoss: false});
         } else {
-            enemies.push({x: Math.random()*300, y: -80, w: 60, h: 50, speedY: 1.2 * SPEED_BOOST, hp: 5, maxHp: 5, color: '#a4f', coins: 50, isBoss: true});
+            // Bosser (fra sidene)
+            const fromLeft = Math.random() > 0.5;
+            enemies.push({
+                x: fromLeft ? -70 : 410, 
+                y: Math.random() * 200 + 50, 
+                w: 60, h: 50, 
+                speedY: 0.2 * SPEED_BOOST, 
+                speedX: (fromLeft ? 1.5 : -1.5) * SPEED_BOOST, 
+                hp: 5, maxHp: 5, color: '#a4f', coins: 50, isBoss: true
+            });
         }
     }
 }
@@ -162,6 +192,7 @@ function update() {
     let speedMult = boosters.slowEnemies ? 0.5 : 1;
     enemies.forEach((e, ei) => {
         e.y += e.speedY * speedMult;
+        e.x += e.speedX * speedMult;
         
         if (player.x < e.x + e.w && player.x + player.width > e.x && player.y < e.y + e.h && player.y + player.height > e.y) {
             if (boosters.armor && !player.armorUsed) {
@@ -185,7 +216,8 @@ function update() {
                 }
             }
         });
-        if (e.y > 600) enemies.splice(ei, 1);
+        // Fjern fiender som går utfor banen (sider eller bunn)
+        if (e.y > 600 || e.x > 500 || e.x < -100) enemies.splice(ei, 1);
     });
 
     score += 0.3 * SPEED_BOOST;
