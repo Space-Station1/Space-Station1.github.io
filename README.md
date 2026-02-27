@@ -1,3 +1,4 @@
+<!DOCTYPE html>
 <html lang="no">
 <head>
 <meta charset="UTF-8">
@@ -25,7 +26,7 @@
         </div>
         <button onclick="togglePause()">Pause</button>
         <button onclick="restartGame()">Restart</button>
-        <button id="unlockBtn" onclick="unlockGun()">Unlock Gun (100c)</button>
+        <button id="unlockBtn" onclick="unlockGun()">Unlock Gun</button>
         <button id="upgradeBtn" onclick="upgradeWeapon()">Upgrade Gun</button>
         <button id="rebirthBtn" onclick="rebirth()" style="display:none; background: gold; color: black; font-weight: bold;">REBIRTH (+30 Gems)</button>
         
@@ -53,10 +54,9 @@ let keys = {};
 let uiVisible = true;
 let gemMilestone = 10000;
 
-// Sjekker om det er første gang spillet kjøres
 if (localStorage.getItem("hasPlayedBefore") === null) {
-    localStorage.setItem("coins", 100); // Start med 100 coins
-    localStorage.setItem("gems", 10);   // Start med 10 gems
+    localStorage.setItem("coins", 100);
+    localStorage.setItem("gems", 10);
     localStorage.setItem("hasPlayedBefore", "true");
 }
 
@@ -79,7 +79,21 @@ function toggleUI() {
 function updateUI() {
     document.getElementById("coinsDisplay").innerText = `Coins: ${Math.floor(coins)}`;
     document.getElementById("gemsDisplay").innerText = `Gems: ${gems}`;
-    document.getElementById("unlockBtn").style.display = hasGun ? "none" : "block";
+    
+    // Unlock Gun Knapp Logikk
+    const unlockBtn = document.getElementById("unlockBtn");
+    if (hasGun) {
+        unlockBtn.style.display = "none";
+    } else {
+        unlockBtn.style.display = "block";
+        if (highscore < 1000) {
+            unlockBtn.innerText = "Lås opp (Trenger 1000 score)";
+            unlockBtn.style.opacity = "0.6";
+        } else {
+            unlockBtn.innerText = "Unlock Gun (100c)";
+            unlockBtn.style.opacity = "1";
+        }
+    }
     
     const upgradeCost = 200 * upgradeLevel + 100;
     const upgradeBtn = document.getElementById("upgradeBtn");
@@ -131,7 +145,18 @@ function togglePause() { paused = !paused; }
 function restartGame() { init(); }
 
 function unlockGun() {
-    if (coins >= 100) { coins -= 100; hasGun = true; saveProgress(); updateUI(); }
+    if (highscore < 1000) {
+        alert("Du må nå en Highscore på 1000 før du kan kjøpe våpen!");
+        return;
+    }
+    if (coins >= 100) { 
+        coins -= 100; 
+        hasGun = true; 
+        saveProgress(); 
+        updateUI(); 
+    } else {
+        alert("Du trenger 100 coins!");
+    }
 }
 
 function upgradeWeapon() {
@@ -146,11 +171,11 @@ function rebirth() {
         gems += 30;
         upgradeLevel = 0;
         hasGun = false;
-        coins = 100; // Starter med 100 coins
+        coins = 100;
         saveProgress();
         updateUI();
         init();
-        alert("Rebirth utført! +30 Gems og 100 start-coins.");
+        alert("Rebirth utført! +30 Gems.");
     }
 }
 
