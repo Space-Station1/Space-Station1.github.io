@@ -3,8 +3,8 @@
 <meta charset="UTF-8">
 <title>Space Station - Arsenal Edition Fixed</title>
 <style>
-    body { margin:0; background:black; color:white; display:flex; justify-content:center; align-items:center; height:100vh; font-family:Arial; overflow:hidden; }
-    canvas { background:#05080f; border:2px solid #4af; max-width: 100vw; max-height: 100vh; }
+    body { margin:0; background:black; color:white; display:flex; justify-content:center; align-items:center; height:100vh; font-family:Arial; overflow:hidden; touch-action: none; }
+    canvas { background:#05080f; border:2px solid #4af; max-width: 100vw; max-height: 100vh; cursor: crosshair; }
     .ui { position:absolute; top:10px; right:10px; display:flex; flex-direction:column; gap:5px; z-index:10; width: 180px; background: rgba(0,0,0,0.85); padding: 10px; border-radius: 8px; border: 1px solid #4af; max-height: 90vh; overflow-y: auto; }
     button { padding:8px; font-size:11px; cursor:pointer; background: #222; color: white; border: 1px solid #4af; border-radius: 4px; width: 100%; margin-bottom: 2px; }
     button:active { background: #4af; }
@@ -67,7 +67,7 @@ let gemMilestone = 10000;
 let enemyExtraSpawn = 0;
 let megaBoss = null;
 
-// Hent lagret data
+// Tilstand
 let coins = Number(localStorage.getItem("coins")) || 100;
 let gems = Number(localStorage.getItem("gems")) || 10;
 let highscore = Number(localStorage.getItem("highscore")) || 0;
@@ -91,53 +91,34 @@ function toggleUI() {
 function updateUI() {
     document.getElementById("coinsDisplay").innerText = `Coins: ${Math.floor(coins)}`;
     document.getElementById("gemsDisplay").innerText = `Gems: ${gems}`;
-    
     document.getElementById("bossFightBtn").style.display = (score >= 50000 && !megaBoss) ? "block" : "none";
-
-    // Pistol
-    const unlockBtn = document.getElementById("unlockBtn");
-    unlockBtn.style.display = weaponsOwned.pistol ? "none" : "block";
-    unlockBtn.disabled = score < 1000;
     
-    const upgPistol = document.getElementById("upgradePistolBtn");
-    upgPistol.style.display = weaponsOwned.pistol ? "block" : "none";
-    upgPistol.innerText = weaponLevels.pistol >= 2 ? "Pistol Maxed" : `Upgrade Pistol (${(weaponLevels.pistol + 1) * 300}c)`;
-    upgPistol.disabled = weaponLevels.pistol >= 2;
+    document.getElementById("unlockBtn").style.display = weaponsOwned.pistol ? "none" : "block";
+    document.getElementById("unlockBtn").disabled = score < 1000;
+    
+    document.getElementById("upgradePistolBtn").style.display = weaponsOwned.pistol ? "block" : "none";
+    document.getElementById("upgradePistolBtn").innerText = weaponLevels.pistol >= 2 ? "Pistol Maxed" : `Upgrade Pistol (${(weaponLevels.pistol + 1) * 300}c)`;
+    document.getElementById("upgradePistolBtn").disabled = weaponLevels.pistol >= 2;
 
-    // Shotgun
     document.getElementById("buyShotgunBtn").style.display = weaponsOwned.shotgun ? "none" : "block";
-    const upgShotgun = document.getElementById("upgradeShotgunBtn");
-    upgShotgun.style.display = weaponsOwned.shotgun ? "block" : "none";
-    upgShotgun.disabled = weaponLevels.shotgun >= 1;
+    document.getElementById("upgradeShotgunBtn").style.display = weaponsOwned.shotgun ? "block" : "none";
+    document.getElementById("upgradeShotgunBtn").disabled = weaponLevels.shotgun >= 1;
 
-    // AR
     document.getElementById("buyARBtn").style.display = weaponsOwned.ar ? "none" : "block";
-    const upgAR = document.getElementById("upgradeARBtn");
-    upgAR.style.display = weaponsOwned.ar ? "block" : "none";
-    upgAR.disabled = weaponLevels.ar >= 1;
+    document.getElementById("upgradeARBtn").style.display = weaponsOwned.ar ? "block" : "none";
+    document.getElementById("upgradeARBtn").disabled = weaponLevels.ar >= 1;
 
-    // Rebirth
     document.getElementById("rebirthBtn").style.display = (weaponLevels.pistol >= 2) ? "block" : "none";
 }
 
 function buyWeapon(type, cost) {
-    if (coins >= cost) {
-        coins -= cost;
-        weaponsOwned[type] = true;
-        activeWeapon = type;
-        saveProgress();
-        updateUI();
-    }
+    if (coins >= cost) { coins -= cost; weaponsOwned[type] = true; activeWeapon = type; saveProgress(); updateUI(); }
 }
 
 function upgradeWeapon(type) {
     let cost = type === 'pistol' ? (weaponLevels.pistol + 1) * 300 : (type === 'shotgun' ? 1000 : 1500);
     if (weaponsOwned[type] && weaponLevels[type] < weaponConfigs[type].maxLvl && coins >= cost) {
-        coins -= cost;
-        weaponLevels[type]++;
-        activeWeapon = type;
-        saveProgress();
-        updateUI();
+        coins -= cost; weaponLevels[type]++; activeWeapon = type; saveProgress(); updateUI();
     }
 }
 
@@ -147,8 +128,7 @@ function rebirth() {
         weaponLevels = { pistol: 0, shotgun: 0, ar: 0 };
         weaponsOwned = { pistol: false, shotgun: false, ar: false };
         activeWeapon = "none";
-        saveProgress();
-        init();
+        saveProgress(); init();
     }
 }
 
@@ -157,10 +137,8 @@ function buyBooster(type, cost) {
 }
 
 function saveProgress() {
-    localStorage.setItem("coins", coins);
-    localStorage.setItem("gems", gems);
-    localStorage.setItem("highscore", highscore);
-    localStorage.setItem("activeWeapon", activeWeapon);
+    localStorage.setItem("coins", coins); localStorage.setItem("gems", gems);
+    localStorage.setItem("highscore", highscore); localStorage.setItem("activeWeapon", activeWeapon);
     localStorage.setItem("weaponsOwned", JSON.stringify(weaponsOwned));
     localStorage.setItem("weaponLevels", JSON.stringify(weaponLevels));
 }
@@ -170,7 +148,7 @@ function init() {
     enemies = []; bullets = []; particles = []; floatingTexts = [];
     stars = Array.from({length:50}, () => ({x: Math.random()*400, y: Math.random()*600, s: (1+Math.random()*2) * BASE_SPEED}));
     score = 0; gemMilestone = 10000; enemyExtraSpawn = 0;
-    megaBoss = null; gameOver = false; paused = false;
+    megaBoss = null; gameOver = false; paused = false; shootCooldown = 0;
     updateUI();
 }
 
@@ -197,7 +175,6 @@ function fire() {
     if (activeWeapon === "none") return;
     const config = weaponConfigs[activeWeapon];
     const lvl = weaponLevels[activeWeapon];
-    
     if (config.type === "triple") {
         bullets.push({x: player.x + 15, y: player.y, vx: -2.5, vy: -11});
         bullets.push({x: player.x + 15, y: player.y, vx: 0, vy: -12});
@@ -209,7 +186,6 @@ function fire() {
 }
 
 function update() {
-    // Partikler og flytende tekst oppdateres alltid for effektens skyld
     particles.forEach((p, i) => { p.x += p.vx; p.y += p.vy; p.life -= 0.02; if(p.life <= 0) particles.splice(i,1); });
     floatingTexts.forEach((t, i) => { t.y -= 1; t.life -= 0.02; if(t.life <= 0) floatingTexts.splice(i,1); });
 
@@ -219,6 +195,8 @@ function update() {
     if (shootCooldown > 0) shootCooldown--;
 
     stars.forEach(s => { s.y += s.s; if(s.y > 600) s.y = 0; });
+
+    // Styring
     if ((keys['a'] || keys['arrowleft']) && player.x > 0) player.x -= player.speed;
     if ((keys['d'] || keys['arrowright']) && player.x < 400 - player.width) player.x += player.speed;
 
@@ -232,11 +210,9 @@ function update() {
         if (megaBoss.x <= 0 || megaBoss.x + megaBoss.w >= 400) megaBoss.speedX *= -1;
         if (megaBoss.hp <= 75 && !megaBoss.p1) { spawnEnemy(true); megaBoss.p1 = true; }
         if (megaBoss.hp <= 20 && !megaBoss.p2) { spawnEnemy(true); megaBoss.p2 = true; }
-        
         bullets.forEach((b, bi) => {
             if (b.x < megaBoss.x + megaBoss.w && b.x + 6 > megaBoss.x && b.y < megaBoss.y + megaBoss.h && b.y + 12 > megaBoss.y) {
-                megaBoss.hp -= (boosters.doubleDamage ? 2 : 1);
-                bullets.splice(bi, 1);
+                megaBoss.hp -= (boosters.doubleDamage ? 2 : 1); bullets.splice(bi, 1);
                 if (megaBoss.hp <= 0) { coins += 500; score += 10000; megaBoss = null; updateUI(); }
             }
         });
@@ -245,16 +221,14 @@ function update() {
     enemies.forEach((e, ei) => {
         e.y += e.speedY;
         if (player.x < e.x + e.w && player.x + player.width > e.x && player.y < e.y + e.h && player.y + player.height > e.y) {
-            if (boosters.armor && !player.armorUsed) { player.armorUsed = true; enemies.splice(ei, 1); }
+            if (boosters.armor && !player.armorUsed) { player.armorUsed = true; enemies.splice(ei, 1); createExplosion(player.x+17, player.y, "#4af"); }
             else { gameOver = true; createExplosion(player.x+17, player.y+17, "#0f0"); }
         }
         bullets.forEach((b, bi) => {
             if (b.x < e.x + e.w && b.x + 6 > e.x && b.y < e.y + e.h && b.y + 12 > e.y) {
                 if (Math.random() < 0.017) { gems += 5; floatingTexts.push({x: e.x, y: e.y, text: "CRIT! +5G", color: "#a4f", life: 1}); }
-                coins += e.coins; score += 100;
-                createExplosion(e.x+15, e.y+15, e.color);
-                enemies.splice(ei, 1); bullets.splice(bi, 1);
-                updateUI();
+                coins += e.coins; score += 100; createExplosion(e.x+15, e.y+15, e.color);
+                enemies.splice(ei, 1); bullets.splice(bi, 1); updateUI();
             }
         });
         if (e.y > 600) enemies.splice(ei, 1);
@@ -276,25 +250,36 @@ function draw() {
         ctx.fillStyle = "red"; ctx.fillRect(50, 10, 300, 10);
         ctx.fillStyle = "lime"; ctx.fillRect(50, 10, 300 * (megaBoss.hp/megaBoss.maxHp), 10);
     }
-
     if (!gameOver) {
         ctx.fillStyle = (boosters.armor && !player.armorUsed) ? '#4af' : '#0f0';
         ctx.fillRect(player.x, player.y, player.width, player.height);
     }
-    
     bullets.forEach(b => { ctx.fillStyle = 'yellow'; ctx.fillRect(b.x, b.y, 6, 12); });
     enemies.forEach(e => { ctx.fillStyle = e.color; ctx.fillRect(e.x, e.y, e.w, e.h); });
-    
     ctx.fillStyle = 'white'; ctx.font = 'bold 16px Arial';
     ctx.fillText(`Score: ${Math.floor(score)}`, 10, 25);
     if(gameOver) { ctx.fillStyle="red"; ctx.font="30px Arial"; ctx.fillText("GAME OVER", 110, 300); }
 }
 
-window.addEventListener("keydown", e => keys[e.key.toLowerCase()] = true);
-window.addEventListener("keyup", e => keys[e.key.toLowerCase()] = false);
+// Event Listeners for styring
+window.addEventListener("keydown", e => { keys[e.key.toLowerCase()] = true; });
+window.addEventListener("keyup", e => { keys[e.key.toLowerCase()] = false; });
+
+// Mus/Touch styring
+const handleMove = (e) => {
+    const rect = canvas.getBoundingClientRect();
+    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+    const x = (clientX - rect.left) * (canvas.width / rect.width);
+    player.x = x - player.width / 2;
+    if (player.x < 0) player.x = 0;
+    if (player.x > canvas.width - player.width) player.x = canvas.width - player.width;
+};
+canvas.addEventListener("mousemove", handleMove);
+canvas.addEventListener("touchmove", (e) => { e.preventDefault(); handleMove(e); }, { passive: false });
+
 function togglePause() { paused = !paused; }
 function restartGame() { init(); }
-function resetGameData() { localStorage.clear(); location.reload(); }
+function resetGameData() { if(confirm("Slette alt?")) { localStorage.clear(); location.reload(); } }
 
 init();
 setInterval(spawnEnemy, 600);
