@@ -1,7 +1,7 @@
 <html lang="no">
 <head>
 <meta charset="UTF-8">
-<title>Space Station - Extreme Mode</title>
+<title>Space Station - Explosion Edition</title>
 <style>
     body { margin:0; background:black; color:white; display:flex; justify-content:center; align-items:center; height:100vh; font-family:Arial; overflow:hidden; }
     canvas { background:#05080f; border:2px solid #4af; max-width: 100vw; max-height: 100vh; }
@@ -47,12 +47,12 @@ const ctx = canvas.getContext("2d");
 
 const SPEED_BOOST = 1.3;
 
-let player, enemies, bullets, stars;
+let player, enemies, bullets, stars, particles;
 let score = 0, gameOver = false, paused = false;
 let keys = {};
 let uiVisible = true;
 let gemMilestone = 10000;
-let enemyExtraSpawn = 0; // Hvor mange EKSTRA fiender som kommer
+let enemyExtraSpawn = 0;
 
 if (localStorage.getItem("hasPlayedBefore") === null) {
     localStorage.setItem("coins", 100);
@@ -89,7 +89,6 @@ function updateUI() {
         unlockBtn.style.opacity = score < 1000 ? "0.6" : "1";
     }
     
-    // Dyrere oppgraderinger: 100 -> 600 -> 1100 -> 1600...
     const upgradeCost = 500 * upgradeLevel + 100;
     const upgradeBtn = document.getElementById("upgradeBtn");
     if (upgradeLevel >= 5) {
@@ -126,14 +125,27 @@ function buyBooster(type, cost) {
     } else { alert("Ikke nok Gems!"); }
 }
 
+function createExplosion(x, y, color) {
+    for (let i = 0; i < 30; i++) {
+        particles.push({
+            x: x,
+            y: y,
+            vx: (Math.random() - 0.5) * 10,
+            vy: (Math.random() - 0.5) * 10,
+            life: 1.0,
+            color: color
+        });
+    }
+}
+
 function init() {
     boosters = { armor: false, doubleDamage: false, slowEnemies: false };
     player = { x: 180, y: 540, width: 35, height: 35, speed: 7 * SPEED_BOOST, armorUsed: false };
-    enemies = []; bullets = [];
+    enemies = []; bullets = []; particles = [];
     stars = Array.from({length:50}, () => ({x: Math.random()*400, y: Math.random()*600, s: (1+Math.random()*2) * SPEED_BOOST}));
     score = 0; 
     gemMilestone = 10000;
-    enemyExtraSpawn = 0; // Reset vanskegrad
+    enemyExtraSpawn = 0;
     gameOver = false; 
     paused = false;
     updateUI();
@@ -164,8 +176,6 @@ function rebirth() {
 
 function spawnEnemy() {
     if (paused || gameOver) return;
-    
-    // Antall fiender som spawner: (1 til 3) + (1 per 10k score)
     const baseCount = Math.floor(Math.random() * 3) + 1;
     const totalToSpawn = baseCount + enemyExtraSpawn;
 
@@ -186,7 +196,14 @@ function spawnEnemy() {
 }
 
 function update() {
+    // Partikler skal bevege seg selv om spillet er Game Over (for eksplosjonseffekt)
+    particles.forEach((p, pi) => {
+        p.x += p.vx; p.y += p.vy; p.life -= 0.02;
+        if (p.life <= 0) particles.splice(pi, 1);
+    });
+
     if (gameOver || paused) return;
+
     stars.forEach(s => { s.y += s.s; if(s.y > 600) s.y = 0; });
 
     if ((keys['a'] || keys['arrowleft']) && player.x > 0) player.x -= player.speed;
@@ -212,8 +229,10 @@ function update() {
             if (boosters.armor && !player.armorUsed) {
                 player.armorUsed = true;
                 enemies.splice(ei, 1);
+                createExplosion(e.x + e.w/2, e.y + e.h/2, '#4af');
             } else {
                 gameOver = true;
+                createExplosion(player.x + player.width/2, player.y + player.height/2, '#0f0');
                 if (score > highscore) { highscore = Math.floor(score); saveProgress(); }
             }
         }
@@ -225,6 +244,7 @@ function update() {
                 if (e.hp <= 0) {
                     coins += e.coins;
                     score += e.isBoss ? 500 : 100;
+                    createExplosion(e.x + e.w/2, e.y + e.h/2, e.color);
                     enemies.splice(ei, 1);
                     updateUI();
                 }
@@ -235,23 +255,32 @@ function update() {
 
     score += 0.3 * SPEED_BOOST;
     
-    // Milestones: +2 Gems og vanskeligere spawn
     if (score >= gemMilestone) { 
         gems += 2; 
-        enemyExtraSpawn += 1; // +1 enemy per spawn hver 10k poeng
+        enemyExtraSpawn += 1;
         gemMilestone += 10000; 
         updateUI(); 
         saveProgress(); 
     }
-    
-    updateUI();
 }
 
 function draw() {
     ctx.clearRect(0,0,400,600);
     stars.forEach(s => { ctx.fillStyle='white'; ctx.fillRect(s.x,s.y,2,2); });
-    ctx.fillStyle = (boosters.armor && !player.armorUsed) ? '#4af' : '#0f0';
-    ctx.fillRect(player.x, player.y, player.width, player.height);
+
+    // Tegn partikler
+    particles.forEach(p => {
+        ctx.globalAlpha = p.life;
+        ctx.fillStyle = p.color;
+        ctx.fillRect(p.x, p.y, 4, 4);
+    });
+    ctx.globalAlpha = 1.0;
+
+    if (!gameOver) {
+        ctx.fillStyle = (boosters.armor && !player.armorUsed) ? '#4af' : '#0f0';
+        ctx.fillRect(player.x, player.y, player.width, player.height);
+    }
+    
     bullets.forEach(b => { ctx.fillStyle = boosters.doubleDamage ? 'orange' : 'yellow'; ctx.fillRect(b.x, b.y, b.w, b.h); });
     enemies.forEach(e => {
         ctx.fillStyle = e.color; ctx.fillRect(e.x, e.y, e.w, e.h);
@@ -260,16 +289,27 @@ function draw() {
             ctx.fillStyle = '#0f0'; ctx.fillRect(e.x, e.y - 10, e.w * (e.hp / e.maxHp), 5);
         }
     });
+
     ctx.fillStyle = 'white'; ctx.font = 'bold 18px Arial';
     ctx.fillText(`Score: ${Math.floor(score)}`, 15, 30);
     ctx.font = '14px Arial'; ctx.fillText(`Highscore: ${highscore}`, 15, 50);
+    
     if (enemyExtraSpawn > 0) {
         ctx.fillStyle = '#f44';
         ctx.font = '10px Arial';
         ctx.fillText(`Difficulty: +${enemyExtraSpawn} enemies`, 15, 70);
     }
-    if (paused) { ctx.font='30px Arial'; ctx.fillText('PAUSE', 150, 300); }
-    if (gameOver) { ctx.fillStyle='red'; ctx.font='30px Arial'; ctx.fillText('GAME OVER', 110, 300); }
+
+    if (paused) { 
+        ctx.fillStyle = 'white';
+        ctx.font='30px Arial'; 
+        ctx.fillText('PAUSE', 150, 300); 
+    }
+    if (gameOver) { 
+        ctx.fillStyle='red'; 
+        ctx.font='30px Arial'; 
+        ctx.fillText('GAME OVER', 110, 300); 
+    }
 }
 
 window.addEventListener("keydown", e => keys[e.key.toLowerCase()] = true);
