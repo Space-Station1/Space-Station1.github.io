@@ -1,7 +1,7 @@
 <html lang="no">
 <head>
 <meta charset="UTF-8">
-<title>Space Station - Crit Hit Edition</title>
+<title>Space Station - Mega Boss Edition</title>
 <style>
     body { margin:0; background:black; color:white; display:flex; justify-content:center; align-items:center; height:100vh; font-family:Arial; overflow:hidden; }
     canvas { background:#05080f; border:2px solid #4af; max-width: 100vw; max-height: 100vh; }
@@ -12,6 +12,8 @@
     .hidden { display: none !important; }
     #stats { font-size: 14px; margin-bottom: 5px; }
     .reset-btn { border-color: #f44; color: #f44; margin-top: 10px; font-size: 10px; }
+    #bossFightBtn { background: darkred; color: white; font-weight: bold; animation: pulse 1s infinite; display: none; }
+    @keyframes pulse { 0% { opacity: 0.7; } 50% { opacity: 1; } 100% { opacity: 0.7; } }
 </style>
 </head>
 <body>
@@ -23,6 +25,7 @@
             <div id="coinsDisplay">Coins: 0</div>
             <div id="gemsDisplay">Gems: 0</div>
         </div>
+        <button id="bossFightBtn" onclick="startMegaBoss()">BOSS FIGHT!</button>
         <button onclick="togglePause()">Pause</button>
         <button onclick="restartGame()">Restart</button>
         <button id="unlockBtn" onclick="unlockGun()">Unlock Gun</button>
@@ -53,6 +56,7 @@ let keys = {};
 let uiVisible = true;
 let gemMilestone = 10000;
 let enemyExtraSpawn = 0;
+let megaBoss = null;
 
 if (localStorage.getItem("hasPlayedBefore") === null) {
     localStorage.setItem("coins", 100);
@@ -80,6 +84,14 @@ function updateUI() {
     document.getElementById("coinsDisplay").innerText = `Coins: ${Math.floor(coins)}`;
     document.getElementById("gemsDisplay").innerText = `Gems: ${gems}`;
     
+    // Boss Fight knapp synlighet
+    const bossBtn = document.getElementById("bossFightBtn");
+    if (score >= 50000 && !megaBoss) {
+        bossBtn.style.display = "block";
+    } else {
+        bossBtn.style.display = "none";
+    }
+
     const unlockBtn = document.getElementById("unlockBtn");
     if (hasGun) {
         unlockBtn.style.display = "none";
@@ -142,7 +154,18 @@ function init() {
     enemies = []; bullets = []; particles = []; floatingTexts = [];
     stars = Array.from({length:50}, () => ({x: Math.random()*400, y: Math.random()*600, s: (1+Math.random()*2) * SPEED_BOOST}));
     score = 0; gemMilestone = 10000; enemyExtraSpawn = 0;
+    megaBoss = null;
     gameOver = false; paused = false;
+    updateUI();
+}
+
+function startMegaBoss() {
+    megaBoss = {
+        x: 150, y: -100, w: 100, h: 80, 
+        hp: 150, maxHp: 150, 
+        speedX: 1.5, speedY: 0.3,
+        phase1Wave: false, phase2Wave: false
+    };
     updateUI();
 }
 
@@ -169,23 +192,13 @@ function rebirth() {
     }
 }
 
-function spawnEnemy() {
+function spawnEnemy(forceWave = false) {
     if (paused || gameOver) return;
-    const baseCount = Math.floor(Math.random() * 3) + 1;
-    const totalToSpawn = baseCount + enemyExtraSpawn;
-    for(let i = 0; i < totalToSpawn; i++) {
-        const r = Math.random();
-        if (r < 0.85) {
-            enemies.push({x: Math.random()*370, y: -40, w: 30, h: 30, speedY: (2.5 + score/4000) * SPEED_BOOST, speedX: 0, hp: 1, maxHp: 1, color: '#f44', coins: 10, isBoss: false});
-        } else {
-            const fromLeft = Math.random() > 0.5;
-            enemies.push({
-                x: fromLeft ? -70 : 410, y: Math.random() * 250 + 50, 
-                w: 60, h: 50, speedY: 0.2 * SPEED_BOOST, 
-                speedX: (fromLeft ? 1.5 : -1.5) * SPEED_BOOST, 
-                hp: 5, maxHp: 5, color: '#a4f', coins: 50, isBoss: true
-            });
-        }
+    if (megaBoss && !forceWave) return; // Ikke spawn vanlig i bossfight med mindre tvunget
+
+    const count = forceWave ? 10 : (Math.floor(Math.random() * 3) + 1 + enemyExtraSpawn);
+    for(let i = 0; i < count; i++) {
+        enemies.push({x: Math.random()*370, y: -40, w: 30, h: 30, speedY: (2.5 + score/4000) * SPEED_BOOST, speedX: 0, hp: 1, maxHp: 1, color: '#f44', coins: 10, isBoss: false});
     }
 }
 
@@ -218,6 +231,45 @@ function update() {
         if (b.y < -20) bullets.splice(bi, 1);
     });
 
+    // Mega Boss Logikk
+    if (megaBoss) {
+        megaBoss.y += megaBoss.speedY;
+        megaBoss.x += megaBoss.speedX;
+        if (megaBoss.x <= 0 || megaBoss.x + megaBoss.w >= 400) megaBoss.speedX *= -1;
+
+        // Fase-bølger
+        if (megaBoss.hp <= megaBoss.maxHp * 0.5 && !megaBoss.phase1Wave) {
+            spawnEnemy(true);
+            megaBoss.phase1Wave = true;
+        }
+        if (megaBoss.hp <= megaBoss.maxHp * 0.1 && !megaBoss.phase2Wave) {
+            spawnEnemy(true);
+            megaBoss.phase2Wave = true;
+        }
+
+        // Kollisjon med spiller
+        if (player.x < megaBoss.x + megaBoss.w && player.x + player.width > megaBoss.x && player.y < megaBoss.y + megaBoss.h && player.y + player.height > megaBoss.y) {
+            gameOver = true;
+            createExplosion(player.x + player.width/2, player.y + player.height/2, '#0f0');
+        }
+
+        // Treff fra kuler
+        bullets.forEach((b, bi) => {
+            if (b.x < megaBoss.x + megaBoss.w && b.x + b.w > megaBoss.x && b.y < megaBoss.y + megaBoss.h && b.y + b.h > megaBoss.y) {
+                megaBoss.hp -= (boosters.doubleDamage ? 2 : 1);
+                bullets.splice(bi, 1);
+                createExplosion(b.x, b.y, "yellow");
+                if (megaBoss.hp <= 0) {
+                    score += 10000;
+                    coins += 500;
+                    createExplosion(megaBoss.x + megaBoss.w/2, megaBoss.y + megaBoss.h/2, "yellow");
+                    megaBoss = null;
+                    updateUI();
+                }
+            }
+        });
+    }
+
     let speedMult = boosters.slowEnemies ? 0.5 : 1;
     enemies.forEach((e, ei) => {
         e.y += e.speedY * speedMult;
@@ -227,26 +279,20 @@ function update() {
             if (boosters.armor && !player.armorUsed) {
                 player.armorUsed = true;
                 enemies.splice(ei, 1);
-                createExplosion(e.x + e.w/2, e.y + e.h/2, '#4af');
             } else {
                 gameOver = true;
                 createExplosion(player.x + player.width/2, player.y + player.height/2, '#0f0');
-                if (score > highscore) { highscore = Math.floor(score); saveProgress(); }
             }
         }
 
         bullets.forEach((b, bi) => {
             if (b.x < e.x + e.w && b.x + b.w > e.x && b.y < e.y + e.h && b.y + b.h > e.y) {
-                
-                // Crit hit logikk (1.7%)
                 if (Math.random() < 0.017) {
                     gems += 5;
                     floatingTexts.push({x: e.x, y: e.y, text: "CRIT! +5G", color: "#a4f", life: 1.0});
                     createExplosion(e.x + e.w/2, e.y + e.h/2, "#a4f");
-                    updateUI();
-                    saveProgress();
+                    updateUI(); saveProgress();
                 }
-
                 e.hp -= (boosters.doubleDamage ? 2 : 1);
                 bullets.splice(bi, 1);
                 if (e.hp <= 0) {
@@ -282,6 +328,18 @@ function draw() {
     });
     ctx.globalAlpha = 1.0;
 
+    if (megaBoss) {
+        ctx.fillStyle = "yellow";
+        ctx.fillRect(megaBoss.x, megaBoss.y, megaBoss.w, megaBoss.h);
+        // Boss HP bar
+        ctx.fillStyle = "grey";
+        ctx.fillRect(50, 20, 300, 15);
+        ctx.fillStyle = "yellow";
+        ctx.fillRect(50, 20, 300 * (megaBoss.hp / megaBoss.maxHp), 15);
+        ctx.strokeStyle = "white";
+        ctx.strokeRect(50, 20, 300, 15);
+    }
+
     if (!gameOver) {
         ctx.fillStyle = (boosters.armor && !player.armorUsed) ? '#4af' : '#0f0';
         ctx.fillRect(player.x, player.y, player.width, player.height);
@@ -300,10 +358,6 @@ function draw() {
     ctx.fillText(`Score: ${Math.floor(score)}`, 15, 30);
     ctx.font = '14px Arial'; ctx.fillText(`Highscore: ${highscore}`, 15, 50);
     
-    if (enemyExtraSpawn > 0) {
-        ctx.fillStyle = '#f44'; ctx.font = '10px Arial';
-        ctx.fillText(`Difficulty: +${enemyExtraSpawn} enemies`, 15, 70);
-    }
     if (paused) { ctx.font='30px Arial'; ctx.fillText('PAUSE', 150, 300); }
     if (gameOver) { ctx.fillStyle='red'; ctx.font='30px Arial'; ctx.fillText('GAME OVER', 110, 300); }
 }
