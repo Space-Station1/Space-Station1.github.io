@@ -1,7 +1,7 @@
 <html lang="no">
 <head>
 <meta charset="UTF-8">
-<title>Space Station - Explosion Edition</title>
+<title>Space Station - Crit Hit Edition</title>
 <style>
     body { margin:0; background:black; color:white; display:flex; justify-content:center; align-items:center; height:100vh; font-family:Arial; overflow:hidden; }
     canvas { background:#05080f; border:2px solid #4af; max-width: 100vw; max-height: 100vh; }
@@ -47,7 +47,7 @@ const ctx = canvas.getContext("2d");
 
 const SPEED_BOOST = 1.3;
 
-let player, enemies, bullets, stars, particles;
+let player, enemies, bullets, stars, particles, floatingTexts;
 let score = 0, gameOver = false, paused = false;
 let keys = {};
 let uiVisible = true;
@@ -126,14 +126,12 @@ function buyBooster(type, cost) {
 }
 
 function createExplosion(x, y, color) {
-    for (let i = 0; i < 30; i++) {
+    for (let i = 0; i < 20; i++) {
         particles.push({
-            x: x,
-            y: y,
-            vx: (Math.random() - 0.5) * 10,
-            vy: (Math.random() - 0.5) * 10,
-            life: 1.0,
-            color: color
+            x: x, y: y,
+            vx: (Math.random() - 0.5) * 8,
+            vy: (Math.random() - 0.5) * 8,
+            life: 1.0, color: color
         });
     }
 }
@@ -141,13 +139,10 @@ function createExplosion(x, y, color) {
 function init() {
     boosters = { armor: false, doubleDamage: false, slowEnemies: false };
     player = { x: 180, y: 540, width: 35, height: 35, speed: 7 * SPEED_BOOST, armorUsed: false };
-    enemies = []; bullets = []; particles = [];
+    enemies = []; bullets = []; particles = []; floatingTexts = [];
     stars = Array.from({length:50}, () => ({x: Math.random()*400, y: Math.random()*600, s: (1+Math.random()*2) * SPEED_BOOST}));
-    score = 0; 
-    gemMilestone = 10000;
-    enemyExtraSpawn = 0;
-    gameOver = false; 
-    paused = false;
+    score = 0; gemMilestone = 10000; enemyExtraSpawn = 0;
+    gameOver = false; paused = false;
     updateUI();
 }
 
@@ -178,7 +173,6 @@ function spawnEnemy() {
     if (paused || gameOver) return;
     const baseCount = Math.floor(Math.random() * 3) + 1;
     const totalToSpawn = baseCount + enemyExtraSpawn;
-
     for(let i = 0; i < totalToSpawn; i++) {
         const r = Math.random();
         if (r < 0.85) {
@@ -196,10 +190,14 @@ function spawnEnemy() {
 }
 
 function update() {
-    // Partikler skal bevege seg selv om spillet er Game Over (for eksplosjonseffekt)
     particles.forEach((p, pi) => {
         p.x += p.vx; p.y += p.vy; p.life -= 0.02;
         if (p.life <= 0) particles.splice(pi, 1);
+    });
+
+    floatingTexts.forEach((t, ti) => {
+        t.y -= 1; t.life -= 0.02;
+        if (t.life <= 0) floatingTexts.splice(ti, 1);
     });
 
     if (gameOver || paused) return;
@@ -239,6 +237,16 @@ function update() {
 
         bullets.forEach((b, bi) => {
             if (b.x < e.x + e.w && b.x + b.w > e.x && b.y < e.y + e.h && b.y + b.h > e.y) {
+                
+                // Crit hit logikk (1.7%)
+                if (Math.random() < 0.017) {
+                    gems += 5;
+                    floatingTexts.push({x: e.x, y: e.y, text: "CRIT! +5G", color: "#a4f", life: 1.0});
+                    createExplosion(e.x + e.w/2, e.y + e.h/2, "#a4f");
+                    updateUI();
+                    saveProgress();
+                }
+
                 e.hp -= (boosters.doubleDamage ? 2 : 1);
                 bullets.splice(bi, 1);
                 if (e.hp <= 0) {
@@ -254,13 +262,9 @@ function update() {
     });
 
     score += 0.3 * SPEED_BOOST;
-    
     if (score >= gemMilestone) { 
-        gems += 2; 
-        enemyExtraSpawn += 1;
-        gemMilestone += 10000; 
-        updateUI(); 
-        saveProgress(); 
+        gems += 2; enemyExtraSpawn += 1; gemMilestone += 10000; 
+        updateUI(); saveProgress(); 
     }
 }
 
@@ -268,11 +272,13 @@ function draw() {
     ctx.clearRect(0,0,400,600);
     stars.forEach(s => { ctx.fillStyle='white'; ctx.fillRect(s.x,s.y,2,2); });
 
-    // Tegn partikler
     particles.forEach(p => {
-        ctx.globalAlpha = p.life;
-        ctx.fillStyle = p.color;
-        ctx.fillRect(p.x, p.y, 4, 4);
+        ctx.globalAlpha = p.life; ctx.fillStyle = p.color; ctx.fillRect(p.x, p.y, 4, 4);
+    });
+
+    floatingTexts.forEach(t => {
+        ctx.globalAlpha = t.life; ctx.fillStyle = t.color;
+        ctx.font = "bold 16px Arial"; ctx.fillText(t.text, t.x, t.y);
     });
     ctx.globalAlpha = 1.0;
 
@@ -295,21 +301,11 @@ function draw() {
     ctx.font = '14px Arial'; ctx.fillText(`Highscore: ${highscore}`, 15, 50);
     
     if (enemyExtraSpawn > 0) {
-        ctx.fillStyle = '#f44';
-        ctx.font = '10px Arial';
+        ctx.fillStyle = '#f44'; ctx.font = '10px Arial';
         ctx.fillText(`Difficulty: +${enemyExtraSpawn} enemies`, 15, 70);
     }
-
-    if (paused) { 
-        ctx.fillStyle = 'white';
-        ctx.font='30px Arial'; 
-        ctx.fillText('PAUSE', 150, 300); 
-    }
-    if (gameOver) { 
-        ctx.fillStyle='red'; 
-        ctx.font='30px Arial'; 
-        ctx.fillText('GAME OVER', 110, 300); 
-    }
+    if (paused) { ctx.font='30px Arial'; ctx.fillText('PAUSE', 150, 300); }
+    if (gameOver) { ctx.fillStyle='red'; ctx.font='30px Arial'; ctx.fillText('GAME OVER', 110, 300); }
 }
 
 window.addEventListener("keydown", e => keys[e.key.toLowerCase()] = true);
