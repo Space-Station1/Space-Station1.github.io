@@ -25,7 +25,7 @@
         <div id="stats">
             <div id="coinsDisplay">Coins: 0</div>
             <div id="gemsDisplay">Gems: 0</div>
-            <div id="highscoreDisplay" style="color: #4af; font-size: 11px;">Highscore: 0</div>
+            <div id="highscoreDisplayUI" style="color: #4af; font-size: 11px;">Best: 0</div>
         </div>
         <button id="bossFightBtn" onclick="startMegaBoss()">BOSS FIGHT!</button>
         <button onclick="togglePause()">Pause</button>
@@ -37,10 +37,10 @@
             <button id="upgradePistolBtn" onclick="upgradeWeapon('pistol')">Oppgrader Pistol</button>
             
             <button id="buyShotgunBtn" onclick="buyWeapon('shotgun', 750)">Kjøp Shotgun (750c)</button>
-            <button id="upgradeShotgunBtn" onclick="upgradeWeapon('shotgun')">Oppgrader Shotgun (1000c)</button>
+            <button id="upgradeShotgunBtn" onclick="upgradeWeapon('shotgun')">Oppgrader Shotgun</button>
 
             <button id="buyARBtn" onclick="buyWeapon('ar', 1200)">Kjøp AR (1200c)</button>
-            <button id="upgradeARBtn" onclick="upgradeWeapon('ar')">Oppgrader AR (1500c)</button>
+            <button id="upgradeARBtn" onclick="upgradeWeapon('ar')">Oppgrader AR</button>
             
             <button id="rebirthBtn" onclick="rebirth()" style="display:none; background: gold !important; color: black; font-weight: bold;">REBIRTH (500c)</button>
         </div>
@@ -94,37 +94,41 @@ function toggleUI() {
 function updateUI() {
     document.getElementById("coinsDisplay").innerText = `Coins: ${Math.floor(coins)}`;
     document.getElementById("gemsDisplay").innerText = `Gems: ${gems}`;
-    document.getElementById("highscoreDisplay").innerText = `Highscore: ${Math.floor(highscore)}`;
+    document.getElementById("highscoreDisplayUI").innerText = `Best: ${Math.floor(highscore)}`;
     
     document.getElementById("bossFightBtn").style.display = (score >= 50000 && !megaBoss) ? "block" : "none";
     
-    // Pistol Unlock logikk (Basert på highscore eller nåværende score)
+    // PISTOL
     const unlockBtn = document.getElementById("unlockBtn");
     unlockBtn.style.display = weaponsOwned.pistol ? "none" : "block";
     unlockBtn.disabled = (highscore < 1000 && score < 1000);
 
-    // Oppgradering Pistol
     const upgPistol = document.getElementById("upgradePistolBtn");
     upgPistol.style.display = weaponsOwned.pistol ? "block" : "none";
     let pCost = (weaponLevels.pistol + 1) * 300;
     upgPistol.innerText = weaponLevels.pistol >= 2 ? "Pistol Maxed" : `Oppgrader Pistol (${pCost}c)`;
     upgPistol.disabled = weaponLevels.pistol >= 2 || coins < pCost;
 
-    // Shotgun
+    // SHOTGUN
     document.getElementById("buyShotgunBtn").style.display = weaponsOwned.shotgun ? "none" : "block";
     document.getElementById("buyShotgunBtn").disabled = coins < 750;
-    document.getElementById("upgradeShotgunBtn").style.display = weaponsOwned.shotgun ? "block" : "none";
-    document.getElementById("upgradeShotgunBtn").disabled = weaponLevels.shotgun >= 1 || coins < 1000;
+    
+    const upgShotgun = document.getElementById("upgradeShotgunBtn");
+    upgShotgun.style.display = weaponsOwned.shotgun ? "block" : "none";
+    upgShotgun.innerText = weaponLevels.shotgun >= 1 ? "Shotgun Maxed" : "Oppgrader Shotgun (1000c)";
+    upgShotgun.disabled = weaponLevels.shotgun >= 1 || coins < 1000;
 
     // AR
     document.getElementById("buyARBtn").style.display = weaponsOwned.ar ? "none" : "block";
     document.getElementById("buyARBtn").disabled = coins < 1200;
-    document.getElementById("upgradeARBtn").style.display = weaponsOwned.ar ? "block" : "none";
-    document.getElementById("upgradeARBtn").disabled = weaponLevels.ar >= 1 || coins < 1500;
+    
+    const upgAR = document.getElementById("upgradeARBtn");
+    upgAR.style.display = weaponsOwned.ar ? "block" : "none";
+    upgAR.innerText = weaponLevels.ar >= 1 ? "AR Maxed" : "Oppgrader AR (1500c)";
+    upgAR.disabled = weaponLevels.ar >= 1 || coins < 1500;
 
     // Rebirth
     document.getElementById("rebirthBtn").style.display = (weaponLevels.pistol >= 2) ? "block" : "none";
-    document.getElementById("rebirthBtn").disabled = coins < 500;
 }
 
 function buyWeapon(type, cost) {
@@ -294,8 +298,12 @@ function draw() {
     bullets.forEach(b => { ctx.fillStyle = 'yellow'; ctx.fillRect(b.x, b.y, 6, 12); });
     enemies.forEach(e => { ctx.fillStyle = e.color; ctx.fillRect(e.x, e.y, e.w, e.h); });
     
+    // SCORE OG HIGHSCORE TEKST PÅ SKJERM
     ctx.fillStyle = 'white'; ctx.font = 'bold 16px Arial';
     ctx.fillText(`Score: ${Math.floor(score)}`, 10, 25);
+    ctx.fillStyle = '#4af'; ctx.font = '12px Arial';
+    ctx.fillText(`Highscore: ${Math.floor(highscore)}`, 10, 45);
+
     if(gameOver) { ctx.fillStyle="red"; ctx.font="30px Arial"; ctx.fillText("GAME OVER", 110, 300); }
 }
 
