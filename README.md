@@ -163,9 +163,11 @@ function upgradeWeapon(type) {
     }
 }
 
+// FIKSET: Rebirth setter coins til 100
 function rebirth() {
     if (coins >= 500) {
-        coins -= 500; gems += 30;
+        coins = 100; // Her skjer magien
+        gems += 30;
         weaponLevels = { pistol: 0, smg: 0, shotgun: 0, ar: 0 };
         weaponsOwned = { pistol: false, smg: false, shotgun: false, ar: false };
         activeWeapon = "none";
@@ -201,10 +203,8 @@ function createExplosion(x, y, color, count = 20) {
 
 function spawnEnemy() {
     if (paused || gameOver) return;
-
     let extraChance = Math.min(0.2, score / 100000);
     let r = Math.random();
-
     if (r < 0.15 && score > 2000) {
         let hp = 5 + Math.floor(score / 10000);
         enemies.push({x: Math.random()*350, y: -50, w: 45, h: 45, speedY: 1.2 * BASE_SPEED, color: '#800', coins: 50, hp: hp, maxHp: hp, isHeavy: true, type: 'heavy'});
@@ -220,7 +220,6 @@ function fire() {
     const config = weaponConfigs[activeWeapon];
     const lvl = weaponLevels[activeWeapon];
     const damage = config.dmg * (boosters.doubleDamage ? 2 : 1);
-
     if (config.type === "triple") {
         bullets.push({x: player.x + 15, y: player.y, vx: -2.5, vy: -11, dmg: damage});
         bullets.push({x: player.x + 15, y: player.y, vx: 0, vy: -12, dmg: damage});
@@ -234,36 +233,25 @@ function fire() {
 function update() {
     particles.forEach((p, i) => { p.x += p.vx; p.y += p.vy; p.life -= 0.02; if(p.life <= 0) particles.splice(i,1); });
     floatingTexts.forEach((t, i) => { t.y -= 1; t.life -= 0.02; if(t.life <= 0) floatingTexts.splice(i,1); });
-
     if (gameOver || paused) return;
-
     if (player.alive && activeWeapon !== "none" && shootCooldown <= 0) fire();
     if (shootCooldown > 0) shootCooldown--;
-
     stars.forEach(s => { s.y += s.s; if(s.y > 600) s.y = 0; });
-
     if (player.alive) {
         if ((keys['a'] || keys['arrowleft']) && player.x > 0) player.x -= player.speed;
         if ((keys['d'] || keys['arrowright']) && player.x < 400 - player.width) player.x += player.speed;
     }
-
     bullets.forEach((b, i) => {
         b.x += b.vx; b.y += b.vy;
         if (b.y < -20 || b.x < -20 || b.x > 420) bullets.splice(i, 1);
     });
-
     let enemySpeedMult = boosters.slowEnemies ? 0.5 : 1.0;
-
     enemies.forEach((e, ei) => {
         if (e.type === 'sinus') {
             if (!e.centerX) e.centerX = e.x;
-            e.angle += 0.05;
-            e.x = e.centerX + Math.sin(e.angle) * 50;
+            e.angle += 0.05; e.x = e.centerX + Math.sin(e.angle) * 50;
             e.y += e.speedY * enemySpeedMult;
-        } else {
-            e.y += e.speedY * enemySpeedMult;
-        }
-
+        } else { e.y += e.speedY * enemySpeedMult; }
         if (player.alive && player.x < e.x + e.w && player.x + player.width > e.x && player.y < e.y + e.h && player.y + player.height > e.y) {
             if (boosters.armor && !player.armorUsed) { 
                 player.armorUsed = true; enemies.splice(ei, 1); createExplosion(player.x+17, player.y, "#4af"); 
@@ -271,13 +259,9 @@ function update() {
                 player.alive = false;
                 createExplosion(player.x + 17, player.y + 17, "#0f0", 50); 
                 createExplosion(player.x + 17, player.y + 17, "orange", 30);
-                setTimeout(() => { 
-                    gameOver = true; 
-                    if(score > highscore) { highscore = Math.floor(score); saveProgress(); }
-                }, 1000);
+                setTimeout(() => { gameOver = true; if(score > highscore) { highscore = Math.floor(score); saveProgress(); } }, 1000);
             }
         }
-
         bullets.forEach((b, bi) => {
             if (b.x < e.x + e.w && b.x + 6 > e.x && b.y < e.y + e.h && b.y + 12 > e.y) {
                 e.hp -= (b.dmg || 1); bullets.splice(bi, 1);
@@ -290,7 +274,6 @@ function update() {
         });
         if (e.y > 600) enemies.splice(ei, 1);
     });
-
     score += 0.3;
     if (score >= gemMilestone) { gems += 2; gemMilestone += 10000; updateUI(); }
 }
@@ -301,14 +284,11 @@ function draw() {
     particles.forEach(p => { ctx.globalAlpha = p.life; ctx.fillStyle = p.color; ctx.fillRect(p.x, p.y, 4, 4); });
     floatingTexts.forEach(t => { ctx.globalAlpha = t.life; ctx.fillStyle = t.color; ctx.font="bold 14px Arial"; ctx.fillText(t.text, t.x, t.y); });
     ctx.globalAlpha = 1;
-    
     if (player.alive) {
         ctx.fillStyle = (boosters.armor && !player.armorUsed) ? '#4af' : '#0f0';
         ctx.fillRect(player.x, player.y, player.width, player.height);
     }
-    
     bullets.forEach(b => { ctx.fillStyle = boosters.doubleDamage ? 'orange' : 'yellow'; ctx.fillRect(b.x, b.y, 6, 12); });
-    
     enemies.forEach(e => { 
         ctx.fillStyle = e.color; ctx.fillRect(e.x, e.y, e.w, e.h); 
         if (e.isHeavy) {
@@ -316,12 +296,10 @@ function draw() {
             ctx.fillStyle = "lime"; ctx.fillRect(e.x, e.y - 8, e.w * (e.hp/e.maxHp), 5);
         }
     });
-    
     ctx.fillStyle = 'white'; ctx.font = 'bold 16px Arial';
     ctx.fillText(`Score: ${Math.floor(score)}`, 10, 25);
     ctx.fillStyle = '#4af'; ctx.font = '12px Arial';
     ctx.fillText(`Highscore: ${Math.floor(highscore)}`, 10, 45);
-
     if(gameOver) { ctx.fillStyle="red"; ctx.font="30px Arial"; ctx.fillText("GAME OVER", 110, 300); }
 }
 
