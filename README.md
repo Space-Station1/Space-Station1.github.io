@@ -1,7 +1,7 @@
 <html lang="no">
 <head>
 <meta charset="UTF-8">
-<title>Space Station - Destruction Edition</title>
+<title>Space Station - Fixed Boosters & Explosion</title>
 <style>
     body { margin:0; background:black; color:white; display:flex; justify-content:center; align-items:center; height:100vh; font-family:Arial; overflow:hidden; touch-action: none; }
     canvas { background:#05080f; border:2px solid #4af; max-width: 100vw; max-height: 100vh; cursor: crosshair; }
@@ -81,6 +81,7 @@ let keys = {};
 let uiVisible = true;
 let gemMilestone = 10000;
 let megaBoss = null;
+let shake = 0;
 
 let coins = Number(localStorage.getItem("coins")) || 100;
 let gems = Number(localStorage.getItem("gems")) || 10;
@@ -113,7 +114,6 @@ function updateUI() {
     document.getElementById("highscoreDisplayUI").innerText = `Best: ${Math.floor(highscore)}`;
     document.getElementById("bossFightBtn").style.display = (score >= 50000 && !megaBoss) ? "block" : "none";
     
-    // UI Oppdateringer (Pistol, SMG, Shotgun, AR)
     document.getElementById("unlockBtn").style.display = weaponsOwned.pistol ? "none" : "block";
     document.getElementById("unlockBtn").disabled = (highscore < 1000 && score < 1000);
     
@@ -168,16 +168,6 @@ function upgradeWeapon(type) {
     }
 }
 
-function rebirth() {
-    if (coins >= 500) {
-        coins -= 500; gems += 30;
-        weaponLevels = { pistol: 0, smg: 0, shotgun: 0, ar: 0 };
-        weaponsOwned = { pistol: false, smg: false, shotgun: false, ar: false };
-        activeWeapon = "none";
-        saveProgress(); init();
-    }
-}
-
 function buyBooster(type, cost) {
     if (gems >= cost) { gems -= cost; boosters[type] = true; updateUI(); saveProgress(); }
 }
@@ -193,29 +183,25 @@ function init() {
     player = { x: 180, y: 540, width: 35, height: 35, speed: 7 * BASE_SPEED, armorUsed: false, alive: true };
     enemies = []; bullets = []; particles = []; floatingTexts = [];
     stars = Array.from({length:50}, () => ({x: Math.random()*400, y: Math.random()*600, s: (1+Math.random()*2) * BASE_SPEED}));
-    score = 0; gemMilestone = 10000;
+    
+    // FIKS: Nullstill boostere her
+    boosters = { armor: false, doubleDamage: false, slowEnemies: false };
+    
+    score = 0; gemMilestone = 10000; shake = 0;
     megaBoss = null; gameOver = false; paused = false; shootCooldown = 0;
     updateUI();
 }
 
 function createExplosion(x, y, color, count = 20) {
     for (let i = 0; i < count; i++) {
-        particles.push({x, y, vx: (Math.random()-0.5)*12, vy: (Math.random()-0.5)*12, life: 1, color});
+        particles.push({x, y, vx: (Math.random()-0.5)*15, vy: (Math.random()-0.5)*15, life: 1, color});
     }
-}
-
-function startMegaBoss() {
-    megaBoss = { x: 150, y: -100, w: 100, h: 80, hp: 150, maxHp: 150, speedX: 1.5, speedY: 0.3 };
-    updateUI();
 }
 
 function spawnEnemy() {
     if (paused || gameOver || megaBoss) return;
-
-    // Økt spawn sjanse basert på score
     let extraChance = Math.min(0.2, score / 100000);
     let r = Math.random();
-
     if (r < 0.15 && score > 2000) {
         let hp = 5 + Math.floor(score / 10000);
         enemies.push({x: Math.random()*350, y: -50, w: 45, h: 45, speedY: 1.2 * BASE_SPEED, color: '#800', coins: 50, hp: hp, maxHp: hp, isHeavy: true, type: 'heavy'});
@@ -231,7 +217,6 @@ function fire() {
     const config = weaponConfigs[activeWeapon];
     const lvl = weaponLevels[activeWeapon];
     const damage = config.dmg * (boosters.doubleDamage ? 2 : 1);
-
     if (config.type === "triple") {
         bullets.push({x: player.x + 15, y: player.y, vx: -2.5, vy: -11, dmg: damage});
         bullets.push({x: player.x + 15, y: player.y, vx: 0, vy: -12, dmg: damage});
@@ -243,6 +228,7 @@ function fire() {
 }
 
 function update() {
+    if (shake > 0) shake *= 0.9;
     particles.forEach((p, i) => { p.x += p.vx; p.y += p.vy; p.life -= 0.02; if(p.life <= 0) particles.splice(i,1); });
     floatingTexts.forEach((t, i) => { t.y -= 1; t.life -= 0.02; if(t.life <= 0) floatingTexts.splice(i,1); });
 
@@ -258,52 +244,28 @@ function update() {
         if ((keys['d'] || keys['arrowright']) && player.x < 400 - player.width) player.x += player.speed;
     }
 
-    bullets.forEach((b, i) => {
-        b.x += b.vx; b.y += b.vy;
-        if (b.y < -20 || b.x < -20 || b.x > 420) bullets.splice(i, 1);
-    });
-
     let enemySpeedMult = boosters.slowEnemies ? 0.5 : 1.0;
-
-    if (megaBoss) {
-        megaBoss.x += megaBoss.speedX * enemySpeedMult; megaBoss.y += megaBoss.speedY * enemySpeedMult;
-        if (megaBoss.x <= 0 || megaBoss.x + megaBoss.w >= 400) megaBoss.speedX *= -1;
-        bullets.forEach((b, bi) => {
-            if (b.x < megaBoss.x + megaBoss.w && b.x + 6 > megaBoss.x && b.y < megaBoss.y + megaBoss.h && b.y + 12 > megaBoss.y) {
-                megaBoss.hp -= b.dmg; bullets.splice(bi, 1);
-                if (megaBoss.hp <= 0) { coins += 500; score += 10000; megaBoss = null; updateUI(); }
-            }
-        });
-    }
 
     enemies.forEach((e, ei) => {
         if (e.type === 'sinus') {
             if (!e.centerX) e.centerX = e.x;
-            e.angle += 0.05;
-            e.x = e.centerX + Math.sin(e.angle) * 50;
+            e.angle += 0.05; e.x = e.centerX + Math.sin(e.angle) * 50;
             e.y += e.speedY * enemySpeedMult;
-        } else {
-            e.y += e.speedY * enemySpeedMult;
-        }
+        } else { e.y += e.speedY * enemySpeedMult; }
 
-        // Kollisjon med spiller
         if (player.alive && player.x < e.x + e.w && player.x + player.width > e.x && player.y < e.y + e.h && player.y + player.height > e.y) {
             if (boosters.armor && !player.armorUsed) { 
                 player.armorUsed = true; enemies.splice(ei, 1); createExplosion(player.x+17, player.y, "#4af"); 
             } else { 
-                player.alive = false;
-                createExplosion(player.x + 17, player.y + 17, "#0f0", 50); // Grønn spiller-eksplosjon
-                createExplosion(player.x + 17, player.y + 17, "orange", 30);
-                setTimeout(() => { 
-                    gameOver = true; 
-                    if(score > highscore) { highscore = Math.floor(score); saveProgress(); }
-                }, 1000);
+                player.alive = false; shake = 20;
+                createExplosion(player.x+17, player.y+17, "#0f0", 60); createExplosion(player.x+17, player.y+17, "orange", 40);
+                setTimeout(() => { gameOver = true; if(score > highscore) { highscore = Math.floor(score); saveProgress(); } }, 1000);
             }
         }
 
         bullets.forEach((b, bi) => {
             if (b.x < e.x + e.w && b.x + 6 > e.x && b.y < e.y + e.h && b.y + 12 > e.y) {
-                e.hp -= (b.dmg || 1); bullets.splice(bi, 1);
+                e.hp -= b.dmg; bullets.splice(bi, 1);
                 if (e.hp <= 0) {
                     if (Math.random() < 0.02) { gems += 5; floatingTexts.push({x: e.x, y: e.y, text: "GEMS! +5", color: "#a4f", life: 1}); }
                     coins += (e.coins || 10); score += (e.isHeavy ? 500 : 100); createExplosion(e.x+e.w/2, e.y+e.h/2, e.color);
@@ -314,52 +276,37 @@ function update() {
         if (e.y > 600) enemies.splice(ei, 1);
     });
 
+    bullets.forEach((b, i) => { b.y += b.vy; b.x += b.vx; if(b.y < -20) bullets.splice(i,1); });
     score += 0.3;
     if (score >= gemMilestone) { gems += 2; gemMilestone += 10000; updateUI(); }
 }
 
 function draw() {
+    ctx.save();
+    if (shake > 1) ctx.translate((Math.random()-0.5)*shake, (Math.random()-0.5)*shake);
     ctx.clearRect(0,0,400,600);
     stars.forEach(s => { ctx.fillStyle='white'; ctx.fillRect(s.x,s.y,2,2); });
     particles.forEach(p => { ctx.globalAlpha = p.life; ctx.fillStyle = p.color; ctx.fillRect(p.x, p.y, 4, 4); });
     floatingTexts.forEach(t => { ctx.globalAlpha = t.life; ctx.fillStyle = t.color; ctx.font="bold 14px Arial"; ctx.fillText(t.text, t.x, t.y); });
     ctx.globalAlpha = 1;
     
-    if (megaBoss) {
-        ctx.fillStyle = "yellow"; ctx.fillRect(megaBoss.x, megaBoss.y, megaBoss.w, megaBoss.h);
-        ctx.fillStyle = "red"; ctx.fillRect(50, 10, 300, 10);
-        ctx.fillStyle = "yellow"; ctx.fillRect(50, 10, 300 * (megaBoss.hp/megaBoss.maxHp), 10);
-    }
-
     if (player.alive) {
         ctx.fillStyle = (boosters.armor && !player.armorUsed) ? '#4af' : '#0f0';
         ctx.fillRect(player.x, player.y, player.width, player.height);
     }
     
     bullets.forEach(b => { ctx.fillStyle = boosters.doubleDamage ? 'orange' : 'yellow'; ctx.fillRect(b.x, b.y, 6, 12); });
+    enemies.forEach(e => { ctx.fillStyle = e.color; ctx.fillRect(e.x, e.y, e.w, e.h); });
     
-    enemies.forEach(e => { 
-        ctx.fillStyle = e.color; ctx.fillRect(e.x, e.y, e.w, e.h); 
-        if (e.isHeavy) {
-            ctx.fillStyle = "red"; ctx.fillRect(e.x, e.y - 8, e.w, 5);
-            ctx.fillStyle = "lime"; ctx.fillRect(e.x, e.y - 8, e.w * (e.hp/e.maxHp), 5);
-        }
-    });
-    
+    ctx.restore();
     ctx.fillStyle = 'white'; ctx.font = 'bold 16px Arial';
     ctx.fillText(`Score: ${Math.floor(score)}`, 10, 25);
-    ctx.fillStyle = '#4af'; ctx.font = '12px Arial';
-    ctx.fillText(`Highscore: ${Math.floor(highscore)}`, 10, 45);
-
     if(gameOver) { ctx.fillStyle="red"; ctx.font="30px Arial"; ctx.fillText("GAME OVER", 110, 300); }
 }
 
 window.addEventListener("keydown", e => { 
-    const key = e.key.toLowerCase(); keys[key] = true; 
-    if (key === '1') selectWeapon('pistol'); 
-    if (key === '2') selectWeapon('smg'); 
-    if (key === '3') selectWeapon('shotgun'); 
-    if (key === '4') selectWeapon('ar');
+    keys[e.key.toLowerCase()] = true; 
+    if (e.key === '1') selectWeapon('pistol'); if (e.key === '2') selectWeapon('smg'); if (e.key === '3') selectWeapon('shotgun'); if (e.key === '4') selectWeapon('ar');
 });
 window.addEventListener("keyup", e => { keys[e.key.toLowerCase()] = false; });
 
@@ -369,19 +316,17 @@ const handleMove = (e) => {
     const clientX = e.touches ? e.touches[0].clientX : e.clientX;
     const x = (clientX - rect.left) * (canvas.width / rect.width);
     player.x = x - player.width / 2;
-    if (player.x < 0) player.x = 0;
-    if (player.x > canvas.width - player.width) player.x = canvas.width - player.width;
+    if (player.x < 0) player.x = 0; if (player.x > 365) player.x = 365;
 };
 canvas.addEventListener("mousemove", handleMove);
 canvas.addEventListener("touchmove", (e) => { e.preventDefault(); handleMove(e); }, { passive: false });
 
-function togglePause() { paused = !paused; }
 function restartGame() { init(); }
 function resetGameData() { if(confirm("Slette alt?")) { localStorage.clear(); location.reload(); } }
 
 init();
-setInterval(spawnEnemy, 500); // Raskere spawn (500ms i stedet for 700ms)
+setInterval(spawnEnemy, 500);
 (function loop(){ update(); draw(); requestAnimationFrame(loop); })();
 </script>
 </body>
-</html>p
+</html>ø
