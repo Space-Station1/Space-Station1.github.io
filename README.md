@@ -15,7 +15,6 @@
     #stats { font-size: 13px; margin-bottom: 5px; line-height: 1.4; }
     .reset-btn { border-color: #f44; color: #f44; margin-top: 10px; font-size: 9px; }
     .hidden { display: none !important; }
-    #bossFightBtn { background: darkred !important; color: white; font-weight: bold; display: none; }
     .wpn-group { margin-bottom: 10px; padding: 5px; border-radius: 4px; background: rgba(255,255,255,0.05); }
 </style>
 </head>
@@ -29,7 +28,6 @@
             <div id="gemsDisplay">Gems: 0</div>
             <div id="highscoreDisplayUI" style="color: #4af; font-size: 11px;">Best: 0</div>
         </div>
-        <button id="bossFightBtn" onclick="startMegaBoss()">BOSS FIGHT!</button>
         <button onclick="togglePause()">Pause</button>
         <button onclick="restartGame()">Restart</button>
         
@@ -80,7 +78,6 @@ let score = 0, gameOver = false, paused = false, shootCooldown = 0;
 let keys = {};
 let uiVisible = true;
 let gemMilestone = 10000;
-let megaBoss = null;
 
 let coins = Number(localStorage.getItem("coins")) || 100;
 let gems = Number(localStorage.getItem("gems")) || 10;
@@ -111,9 +108,7 @@ function updateUI() {
     document.getElementById("coinsDisplay").innerText = `Coins: ${Math.floor(coins)}`;
     document.getElementById("gemsDisplay").innerText = `Gems: ${gems}`;
     document.getElementById("highscoreDisplayUI").innerText = `Best: ${Math.floor(highscore)}`;
-    document.getElementById("bossFightBtn").style.display = (score >= 50000 && !megaBoss) ? "block" : "none";
     
-    // UI Oppdateringer (Pistol, SMG, Shotgun, AR)
     document.getElementById("unlockBtn").style.display = weaponsOwned.pistol ? "none" : "block";
     document.getElementById("unlockBtn").disabled = (highscore < 1000 && score < 1000);
     
@@ -194,7 +189,7 @@ function init() {
     enemies = []; bullets = []; particles = []; floatingTexts = [];
     stars = Array.from({length:50}, () => ({x: Math.random()*400, y: Math.random()*600, s: (1+Math.random()*2) * BASE_SPEED}));
     score = 0; gemMilestone = 10000;
-    megaBoss = null; gameOver = false; paused = false; shootCooldown = 0;
+    gameOver = false; paused = false; shootCooldown = 0;
     updateUI();
 }
 
@@ -204,15 +199,9 @@ function createExplosion(x, y, color, count = 20) {
     }
 }
 
-function startMegaBoss() {
-    megaBoss = { x: 150, y: -100, w: 100, h: 80, hp: 150, maxHp: 150, speedX: 1.5, speedY: 0.3 };
-    updateUI();
-}
-
 function spawnEnemy() {
-    if (paused || gameOver || megaBoss) return;
+    if (paused || gameOver) return;
 
-    // Økt spawn sjanse basert på score
     let extraChance = Math.min(0.2, score / 100000);
     let r = Math.random();
 
@@ -265,17 +254,6 @@ function update() {
 
     let enemySpeedMult = boosters.slowEnemies ? 0.5 : 1.0;
 
-    if (megaBoss) {
-        megaBoss.x += megaBoss.speedX * enemySpeedMult; megaBoss.y += megaBoss.speedY * enemySpeedMult;
-        if (megaBoss.x <= 0 || megaBoss.x + megaBoss.w >= 400) megaBoss.speedX *= -1;
-        bullets.forEach((b, bi) => {
-            if (b.x < megaBoss.x + megaBoss.w && b.x + 6 > megaBoss.x && b.y < megaBoss.y + megaBoss.h && b.y + 12 > megaBoss.y) {
-                megaBoss.hp -= b.dmg; bullets.splice(bi, 1);
-                if (megaBoss.hp <= 0) { coins += 500; score += 10000; megaBoss = null; updateUI(); }
-            }
-        });
-    }
-
     enemies.forEach((e, ei) => {
         if (e.type === 'sinus') {
             if (!e.centerX) e.centerX = e.x;
@@ -286,13 +264,12 @@ function update() {
             e.y += e.speedY * enemySpeedMult;
         }
 
-        // Kollisjon med spiller
         if (player.alive && player.x < e.x + e.w && player.x + player.width > e.x && player.y < e.y + e.h && player.y + player.height > e.y) {
             if (boosters.armor && !player.armorUsed) { 
                 player.armorUsed = true; enemies.splice(ei, 1); createExplosion(player.x+17, player.y, "#4af"); 
             } else { 
                 player.alive = false;
-                createExplosion(player.x + 17, player.y + 17, "#0f0", 50); // Grønn spiller-eksplosjon
+                createExplosion(player.x + 17, player.y + 17, "#0f0", 50); 
                 createExplosion(player.x + 17, player.y + 17, "orange", 30);
                 setTimeout(() => { 
                     gameOver = true; 
@@ -325,12 +302,6 @@ function draw() {
     floatingTexts.forEach(t => { ctx.globalAlpha = t.life; ctx.fillStyle = t.color; ctx.font="bold 14px Arial"; ctx.fillText(t.text, t.x, t.y); });
     ctx.globalAlpha = 1;
     
-    if (megaBoss) {
-        ctx.fillStyle = "yellow"; ctx.fillRect(megaBoss.x, megaBoss.y, megaBoss.w, megaBoss.h);
-        ctx.fillStyle = "red"; ctx.fillRect(50, 10, 300, 10);
-        ctx.fillStyle = "yellow"; ctx.fillRect(50, 10, 300 * (megaBoss.hp/megaBoss.maxHp), 10);
-    }
-
     if (player.alive) {
         ctx.fillStyle = (boosters.armor && !player.armorUsed) ? '#4af' : '#0f0';
         ctx.fillRect(player.x, player.y, player.width, player.height);
@@ -380,7 +351,7 @@ function restartGame() { init(); }
 function resetGameData() { if(confirm("Slette alt?")) { localStorage.clear(); location.reload(); } }
 
 init();
-setInterval(spawnEnemy, 500); // Raskere spawn (500ms i stedet for 700ms)
+setInterval(spawnEnemy, 500); 
 (function loop(){ update(); draw(); requestAnimationFrame(loop); })();
 </script>
 </body>
