@@ -1,7 +1,7 @@
 <html lang="no">
 <head>
 <meta charset="UTF-8">
-<title>Space Station - SMG FIX</title>
+<title>Space Station - Destruction Edition</title>
 <style>
     body { margin:0; background:black; color:white; display:flex; justify-content:center; align-items:center; height:100vh; font-family:Arial; overflow:hidden; touch-action: none; }
     canvas { background:#05080f; border:2px solid #4af; max-width: 100vw; max-height: 100vh; cursor: crosshair; }
@@ -34,7 +34,7 @@
         <button onclick="restartGame()">Restart</button>
         
         <div id="weaponShop">
-            <span class="section-title">Våpen (1, 2, 3, 4)</span>
+            <span class="section-title">Våpen (1-4)</span>
             <div class="wpn-group">
                 <button id="pistolSelect" onclick="selectWeapon('pistol')">Pistol</button>
                 <button id="unlockBtn" onclick="buyWeapon('pistol', 0)">Lås opp (1k Score)</button>
@@ -80,7 +80,6 @@ let score = 0, gameOver = false, paused = false, shootCooldown = 0;
 let keys = {};
 let uiVisible = true;
 let gemMilestone = 10000;
-let enemyExtraSpawn = 0;
 let megaBoss = null;
 
 let coins = Number(localStorage.getItem("coins")) || 100;
@@ -114,8 +113,10 @@ function updateUI() {
     document.getElementById("highscoreDisplayUI").innerText = `Best: ${Math.floor(highscore)}`;
     document.getElementById("bossFightBtn").style.display = (score >= 50000 && !megaBoss) ? "block" : "none";
     
+    // UI Oppdateringer (Pistol, SMG, Shotgun, AR)
     document.getElementById("unlockBtn").style.display = weaponsOwned.pistol ? "none" : "block";
     document.getElementById("unlockBtn").disabled = (highscore < 1000 && score < 1000);
+    
     const upgPistol = document.getElementById("upgradePistolBtn");
     upgPistol.style.display = weaponsOwned.pistol ? "block" : "none";
     upgPistol.innerText = weaponLevels.pistol >= 2 ? "Maxed" : `Oppgrader (${(weaponLevels.pistol + 1) * 300}c)`;
@@ -189,17 +190,17 @@ function saveProgress() {
 }
 
 function init() {
-    player = { x: 180, y: 540, width: 35, height: 35, speed: 7 * BASE_SPEED, armorUsed: false };
+    player = { x: 180, y: 540, width: 35, height: 35, speed: 7 * BASE_SPEED, armorUsed: false, alive: true };
     enemies = []; bullets = []; particles = []; floatingTexts = [];
     stars = Array.from({length:50}, () => ({x: Math.random()*400, y: Math.random()*600, s: (1+Math.random()*2) * BASE_SPEED}));
-    score = 0; gemMilestone = 10000; enemyExtraSpawn = 0;
+    score = 0; gemMilestone = 10000;
     megaBoss = null; gameOver = false; paused = false; shootCooldown = 0;
     updateUI();
 }
 
-function createExplosion(x, y, color) {
-    for (let i = 0; i < 20; i++) {
-        particles.push({x, y, vx: (Math.random()-0.5)*10, vy: (Math.random()-0.5)*10, life: 1, color});
+function createExplosion(x, y, color, count = 20) {
+    for (let i = 0; i < count; i++) {
+        particles.push({x, y, vx: (Math.random()-0.5)*12, vy: (Math.random()-0.5)*12, life: 1, color});
     }
 }
 
@@ -211,11 +212,14 @@ function startMegaBoss() {
 function spawnEnemy() {
     if (paused || gameOver || megaBoss) return;
 
+    // Økt spawn sjanse basert på score
+    let extraChance = Math.min(0.2, score / 100000);
     let r = Math.random();
+
     if (r < 0.15 && score > 2000) {
         let hp = 5 + Math.floor(score / 10000);
         enemies.push({x: Math.random()*350, y: -50, w: 45, h: 45, speedY: 1.2 * BASE_SPEED, color: '#800', coins: 50, hp: hp, maxHp: hp, isHeavy: true, type: 'heavy'});
-    } else if (r < 0.30 && score > 1000) {
+    } else if (r < 0.30 + extraChance && score > 1000) {
         enemies.push({x: Math.random()*300 + 50, y: -40, w: 25, h: 25, speedY: 2 * BASE_SPEED, color: '#a0f', coins: 20, hp: 1, isHeavy: false, type: 'sinus', centerX: 0, angle: 0});
     } else {
         enemies.push({x: Math.random()*370, y: -40, w: 30, h: 30, speedY: (2.5 + score/5000) * BASE_SPEED, color: '#f44', coins: 10, hp: 1, isHeavy: false, type: 'normal'});
@@ -223,8 +227,7 @@ function spawnEnemy() {
 }
 
 function fire() {
-    if (activeWeapon === "none" || !weaponConfigs[activeWeapon]) return;
-    
+    if (!player.alive || activeWeapon === "none") return;
     const config = weaponConfigs[activeWeapon];
     const lvl = weaponLevels[activeWeapon];
     const damage = config.dmg * (boosters.doubleDamage ? 2 : 1);
@@ -245,13 +248,15 @@ function update() {
 
     if (gameOver || paused) return;
 
-    if (activeWeapon !== "none" && shootCooldown <= 0) fire();
+    if (player.alive && activeWeapon !== "none" && shootCooldown <= 0) fire();
     if (shootCooldown > 0) shootCooldown--;
 
     stars.forEach(s => { s.y += s.s; if(s.y > 600) s.y = 0; });
 
-    if ((keys['a'] || keys['arrowleft']) && player.x > 0) player.x -= player.speed;
-    if ((keys['d'] || keys['arrowright']) && player.x < 400 - player.width) player.x += player.speed;
+    if (player.alive) {
+        if ((keys['a'] || keys['arrowleft']) && player.x > 0) player.x -= player.speed;
+        if ((keys['d'] || keys['arrowright']) && player.x < 400 - player.width) player.x += player.speed;
+    }
 
     bullets.forEach((b, i) => {
         b.x += b.vx; b.y += b.vy;
@@ -281,9 +286,19 @@ function update() {
             e.y += e.speedY * enemySpeedMult;
         }
 
-        if (player.x < e.x + e.w && player.x + player.width > e.x && player.y < e.y + e.h && player.y + player.height > e.y) {
-            if (boosters.armor && !player.armorUsed) { player.armorUsed = true; enemies.splice(ei, 1); createExplosion(player.x+17, player.y, "#4af"); }
-            else { gameOver = true; if(score > highscore) { highscore = Math.floor(score); saveProgress(); } }
+        // Kollisjon med spiller
+        if (player.alive && player.x < e.x + e.w && player.x + player.width > e.x && player.y < e.y + e.h && player.y + player.height > e.y) {
+            if (boosters.armor && !player.armorUsed) { 
+                player.armorUsed = true; enemies.splice(ei, 1); createExplosion(player.x+17, player.y, "#4af"); 
+            } else { 
+                player.alive = false;
+                createExplosion(player.x + 17, player.y + 17, "#0f0", 50); // Grønn spiller-eksplosjon
+                createExplosion(player.x + 17, player.y + 17, "orange", 30);
+                setTimeout(() => { 
+                    gameOver = true; 
+                    if(score > highscore) { highscore = Math.floor(score); saveProgress(); }
+                }, 1000);
+            }
         }
 
         bullets.forEach((b, bi) => {
@@ -316,7 +331,7 @@ function draw() {
         ctx.fillStyle = "yellow"; ctx.fillRect(50, 10, 300 * (megaBoss.hp/megaBoss.maxHp), 10);
     }
 
-    if (!gameOver) {
+    if (player.alive) {
         ctx.fillStyle = (boosters.armor && !player.armorUsed) ? '#4af' : '#0f0';
         ctx.fillRect(player.x, player.y, player.width, player.height);
     }
@@ -349,7 +364,7 @@ window.addEventListener("keydown", e => {
 window.addEventListener("keyup", e => { keys[e.key.toLowerCase()] = false; });
 
 const handleMove = (e) => {
-    if(paused || gameOver) return;
+    if(paused || gameOver || !player.alive) return;
     const rect = canvas.getBoundingClientRect();
     const clientX = e.touches ? e.touches[0].clientX : e.clientX;
     const x = (clientX - rect.left) * (canvas.width / rect.width);
@@ -365,8 +380,8 @@ function restartGame() { init(); }
 function resetGameData() { if(confirm("Slette alt?")) { localStorage.clear(); location.reload(); } }
 
 init();
-setInterval(spawnEnemy, 700);
+setInterval(spawnEnemy, 500); // Raskere spawn (500ms i stedet for 700ms)
 (function loop(){ update(); draw(); requestAnimationFrame(loop); })();
 </script>
 </body>
-</html>
+</html>p
