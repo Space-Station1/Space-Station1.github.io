@@ -1,7 +1,7 @@
 <html lang="no">
 <head>
 <meta charset="UTF-8">
-<title>Space Station - Heavy Edition (SMG Update)</title>
+<title>Space Station - SMG FIX</title>
 <style>
     body { margin:0; background:black; color:white; display:flex; justify-content:center; align-items:center; height:100vh; font-family:Arial; overflow:hidden; touch-action: none; }
     canvas { background:#05080f; border:2px solid #4af; max-width: 100vw; max-height: 100vh; cursor: crosshair; }
@@ -114,7 +114,6 @@ function updateUI() {
     document.getElementById("highscoreDisplayUI").innerText = `Best: ${Math.floor(highscore)}`;
     document.getElementById("bossFightBtn").style.display = (score >= 50000 && !megaBoss) ? "block" : "none";
     
-    // Pistol
     document.getElementById("unlockBtn").style.display = weaponsOwned.pistol ? "none" : "block";
     document.getElementById("unlockBtn").disabled = (highscore < 1000 && score < 1000);
     const upgPistol = document.getElementById("upgradePistolBtn");
@@ -122,21 +121,18 @@ function updateUI() {
     upgPistol.innerText = weaponLevels.pistol >= 2 ? "Maxed" : `Oppgrader (${(weaponLevels.pistol + 1) * 300}c)`;
     upgPistol.disabled = weaponLevels.pistol >= 2 || coins < (weaponLevels.pistol + 1) * 300;
     
-    // SMG
     document.getElementById("buySMGBtn").style.display = weaponsOwned.smg ? "none" : "block";
     const upgSMG = document.getElementById("upgradeSMGBtn");
     upgSMG.style.display = weaponsOwned.smg ? "block" : "none";
     upgSMG.innerText = weaponLevels.smg >= 1 ? "Maxed" : "Oppgrader (800c)";
     upgSMG.disabled = weaponLevels.smg >= 1 || coins < 800;
 
-    // Shotgun
     document.getElementById("buyShotgunBtn").style.display = weaponsOwned.shotgun ? "none" : "block";
     const upgShotgun = document.getElementById("upgradeShotgunBtn");
     upgShotgun.style.display = weaponsOwned.shotgun ? "block" : "none";
     upgShotgun.innerText = weaponLevels.shotgun >= 1 ? "Maxed" : "Oppgrader (1000c)";
     upgShotgun.disabled = weaponLevels.shotgun >= 1 || coins < 1000;
 
-    // AR
     document.getElementById("buyARBtn").style.display = weaponsOwned.ar ? "none" : "block";
     const upgAR = document.getElementById("upgradeARBtn");
     upgAR.style.display = weaponsOwned.ar ? "block" : "none";
@@ -227,7 +223,8 @@ function spawnEnemy() {
 }
 
 function fire() {
-    if (activeWeapon === "none") return;
+    if (activeWeapon === "none" || !weaponConfigs[activeWeapon]) return;
+    
     const config = weaponConfigs[activeWeapon];
     const lvl = weaponLevels[activeWeapon];
     const damage = config.dmg * (boosters.doubleDamage ? 2 : 1);
@@ -291,7 +288,7 @@ function update() {
 
         bullets.forEach((b, bi) => {
             if (b.x < e.x + e.w && b.x + 6 > e.x && b.y < e.y + e.h && b.y + 12 > e.y) {
-                e.hp -= b.dmg; bullets.splice(bi, 1);
+                e.hp -= (b.dmg || 1); bullets.splice(bi, 1);
                 if (e.hp <= 0) {
                     if (Math.random() < 0.02) { gems += 5; floatingTexts.push({x: e.x, y: e.y, text: "GEMS! +5", color: "#a4f", life: 1}); }
                     coins += (e.coins || 10); score += (e.isHeavy ? 500 : 100); createExplosion(e.x+e.w/2, e.y+e.h/2, e.color);
