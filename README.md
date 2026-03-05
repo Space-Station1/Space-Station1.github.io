@@ -1,7 +1,7 @@
 <html lang="no">
 <head>
 <meta charset="UTF-8">
-<title>Space Station - Fixed Boosters & Explosion</title>
+<title>Space Station - HP Bar & Booster Fix</title>
 <style>
     body { margin:0; background:black; color:white; display:flex; justify-content:center; align-items:center; height:100vh; font-family:Arial; overflow:hidden; touch-action: none; }
     canvas { background:#05080f; border:2px solid #4af; max-width: 100vw; max-height: 100vh; cursor: crosshair; }
@@ -15,7 +15,6 @@
     #stats { font-size: 13px; margin-bottom: 5px; line-height: 1.4; }
     .reset-btn { border-color: #f44; color: #f44; margin-top: 10px; font-size: 9px; }
     .hidden { display: none !important; }
-    #bossFightBtn { background: darkred !important; color: white; font-weight: bold; display: none; }
     .wpn-group { margin-bottom: 10px; padding: 5px; border-radius: 4px; background: rgba(255,255,255,0.05); }
 </style>
 </head>
@@ -29,7 +28,6 @@
             <div id="gemsDisplay">Gems: 0</div>
             <div id="highscoreDisplayUI" style="color: #4af; font-size: 11px;">Best: 0</div>
         </div>
-        <button id="bossFightBtn" onclick="startMegaBoss()">BOSS FIGHT!</button>
         <button onclick="togglePause()">Pause</button>
         <button onclick="restartGame()">Restart</button>
         
@@ -55,7 +53,6 @@
                 <button id="buyARBtn" onclick="buyWeapon('ar', 1200)">Kjøp (1200c)</button>
                 <button id="upgradeARBtn" onclick="upgradeWeapon('ar')">Oppgrader</button>
             </div>
-            <button id="rebirthBtn" onclick="rebirth()" style="display:none; background: gold !important; color: black; font-weight: bold;">REBIRTH (500c)</button>
         </div>
 
         <div id="shop">
@@ -80,11 +77,10 @@ let score = 0, gameOver = false, paused = false, shootCooldown = 0;
 let keys = {};
 let uiVisible = true;
 let gemMilestone = 10000;
-let megaBoss = null;
 let shake = 0;
 
-let coins = Number(localStorage.getItem("coins")) || 100;
-let gems = Number(localStorage.getItem("gems")) || 10;
+let coins = Number(localStorage.getItem("coins")) || 0;
+let gems = Number(localStorage.getItem("gems")) || 0;
 let highscore = Number(localStorage.getItem("highscore")) || 0;
 let activeWeapon = localStorage.getItem("activeWeapon") || "none";
 let weaponsOwned = JSON.parse(localStorage.getItem("weaponsOwned")) || { pistol: false, smg: false, shotgun: false, ar: false };
@@ -112,34 +108,10 @@ function updateUI() {
     document.getElementById("coinsDisplay").innerText = `Coins: ${Math.floor(coins)}`;
     document.getElementById("gemsDisplay").innerText = `Gems: ${gems}`;
     document.getElementById("highscoreDisplayUI").innerText = `Best: ${Math.floor(highscore)}`;
-    document.getElementById("bossFightBtn").style.display = (score >= 50000 && !megaBoss) ? "block" : "none";
     
     document.getElementById("unlockBtn").style.display = weaponsOwned.pistol ? "none" : "block";
     document.getElementById("unlockBtn").disabled = (highscore < 1000 && score < 1000);
     
-    const upgPistol = document.getElementById("upgradePistolBtn");
-    upgPistol.style.display = weaponsOwned.pistol ? "block" : "none";
-    upgPistol.innerText = weaponLevels.pistol >= 2 ? "Maxed" : `Oppgrader (${(weaponLevels.pistol + 1) * 300}c)`;
-    upgPistol.disabled = weaponLevels.pistol >= 2 || coins < (weaponLevels.pistol + 1) * 300;
-    
-    document.getElementById("buySMGBtn").style.display = weaponsOwned.smg ? "none" : "block";
-    const upgSMG = document.getElementById("upgradeSMGBtn");
-    upgSMG.style.display = weaponsOwned.smg ? "block" : "none";
-    upgSMG.innerText = weaponLevels.smg >= 1 ? "Maxed" : "Oppgrader (800c)";
-    upgSMG.disabled = weaponLevels.smg >= 1 || coins < 800;
-
-    document.getElementById("buyShotgunBtn").style.display = weaponsOwned.shotgun ? "none" : "block";
-    const upgShotgun = document.getElementById("upgradeShotgunBtn");
-    upgShotgun.style.display = weaponsOwned.shotgun ? "block" : "none";
-    upgShotgun.innerText = weaponLevels.shotgun >= 1 ? "Maxed" : "Oppgrader (1000c)";
-    upgShotgun.disabled = weaponLevels.shotgun >= 1 || coins < 1000;
-
-    document.getElementById("buyARBtn").style.display = weaponsOwned.ar ? "none" : "block";
-    const upgAR = document.getElementById("upgradeARBtn");
-    upgAR.style.display = weaponsOwned.ar ? "block" : "none";
-    upgAR.innerText = weaponLevels.ar >= 1 ? "Maxed" : "Oppgrader (1500c)";
-    upgAR.disabled = weaponLevels.ar >= 1 || coins < 1500;
-
     ["pistol", "smg", "shotgun", "ar"].forEach(w => {
         const btn = document.getElementById(w + "Select");
         if(btn) {
@@ -147,9 +119,11 @@ function updateUI() {
             btn.className = activeWeapon === w ? "active-wpn" : "";
             btn.innerText = activeWeapon === w ? w.toUpperCase() + " (VALGT)" : "Bruk " + w;
         }
+        const upgBtn = document.getElementById("upgrade" + w.charAt(0).toUpperCase() + w.slice(1) + "Btn");
+        if(upgBtn) {
+            upgBtn.style.display = weaponsOwned[w] ? "block" : "none";
+        }
     });
-
-    document.getElementById("rebirthBtn").style.display = (weaponLevels.pistol >= 2) ? "block" : "none";
 }
 
 function buyWeapon(type, cost) {
@@ -157,14 +131,9 @@ function buyWeapon(type, cost) {
 }
 
 function upgradeWeapon(type) {
-    let cost = 0;
-    if(type === 'pistol') cost = (weaponLevels.pistol + 1) * 300;
-    else if(type === 'smg') cost = 800;
-    else if(type === 'shotgun') cost = 1000;
-    else if(type === 'ar') cost = 1500;
-
+    let cost = 500; // Forenklet kostnad for oppgradering
     if (weaponsOwned[type] && weaponLevels[type] < weaponConfigs[type].maxLvl && coins >= cost) {
-        coins -= cost; weaponLevels[type]++; activeWeapon = type; saveProgress(); updateUI();
+        coins -= cost; weaponLevels[type]++; saveProgress(); updateUI();
     }
 }
 
@@ -183,12 +152,9 @@ function init() {
     player = { x: 180, y: 540, width: 35, height: 35, speed: 7 * BASE_SPEED, armorUsed: false, alive: true };
     enemies = []; bullets = []; particles = []; floatingTexts = [];
     stars = Array.from({length:50}, () => ({x: Math.random()*400, y: Math.random()*600, s: (1+Math.random()*2) * BASE_SPEED}));
-    
-    // FIKS: Nullstill boostere her
     boosters = { armor: false, doubleDamage: false, slowEnemies: false };
-    
     score = 0; gemMilestone = 10000; shake = 0;
-    megaBoss = null; gameOver = false; paused = false; shootCooldown = 0;
+    gameOver = false; paused = false; shootCooldown = 0;
     updateUI();
 }
 
@@ -199,7 +165,7 @@ function createExplosion(x, y, color, count = 20) {
 }
 
 function spawnEnemy() {
-    if (paused || gameOver || megaBoss) return;
+    if (paused || gameOver) return;
     let extraChance = Math.min(0.2, score / 100000);
     let r = Math.random();
     if (r < 0.15 && score > 2000) {
@@ -236,7 +202,6 @@ function update() {
 
     if (player.alive && activeWeapon !== "none" && shootCooldown <= 0) fire();
     if (shootCooldown > 0) shootCooldown--;
-
     stars.forEach(s => { s.y += s.s; if(s.y > 600) s.y = 0; });
 
     if (player.alive) {
@@ -248,8 +213,7 @@ function update() {
 
     enemies.forEach((e, ei) => {
         if (e.type === 'sinus') {
-            if (!e.centerX) e.centerX = e.x;
-            e.angle += 0.05; e.x = e.centerX + Math.sin(e.angle) * 50;
+            if (!e.centerX) e.centerX = e.x; e.angle += 0.05; e.x = e.centerX + Math.sin(e.angle) * 50;
             e.y += e.speedY * enemySpeedMult;
         } else { e.y += e.speedY * enemySpeedMult; }
 
@@ -296,7 +260,15 @@ function draw() {
     }
     
     bullets.forEach(b => { ctx.fillStyle = boosters.doubleDamage ? 'orange' : 'yellow'; ctx.fillRect(b.x, b.y, 6, 12); });
-    enemies.forEach(e => { ctx.fillStyle = e.color; ctx.fillRect(e.x, e.y, e.w, e.h); });
+    
+    enemies.forEach(e => { 
+        ctx.fillStyle = e.color; ctx.fillRect(e.x, e.y, e.w, e.h); 
+        // HP BARER TILBAKE HER:
+        if (e.isHeavy) {
+            ctx.fillStyle = "red"; ctx.fillRect(e.x, e.y - 10, e.w, 5);
+            ctx.fillStyle = "lime"; ctx.fillRect(e.x, e.y - 10, e.w * (e.hp / e.maxHp), 5);
+        }
+    });
     
     ctx.restore();
     ctx.fillStyle = 'white'; ctx.font = 'bold 16px Arial';
@@ -329,4 +301,4 @@ setInterval(spawnEnemy, 500);
 (function loop(){ update(); draw(); requestAnimationFrame(loop); })();
 </script>
 </body>
-</html>ø
+</html>
