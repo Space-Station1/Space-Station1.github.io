@@ -58,9 +58,9 @@
 
         <div id="shop">
             <span class="section-title">Boosters (Gems)</span>
-            <button onclick="buyBooster('armor', 50)">🛡️ Armor (50g)</button>
-            <button onclick="buyBooster('doubleDamage', 50)">🔥 2x Dmg (50g)</button>
-            <button onclick="buyBooster('slowEnemies', 50)">❄️ Slow (50g)</button>
+            <button id="armorBtn" onclick="buyBooster('armor', 50)">🛡️ Armor (50g)</button>
+            <button id="doubleDamageBtn" onclick="buyBooster('doubleDamage', 50)">🔥 2x Dmg (50g)</button>
+            <button id="slowEnemiesBtn" onclick="buyBooster('slowEnemies', 50)">❄️ Slow (50g)</button>
         </div>
         <button class="reset-btn" onclick="resetGameData()">RESET ALL DATA</button>
     </div>
@@ -78,6 +78,7 @@ let score = 0, gameOver = false, paused = false, shootCooldown = 0;
 let keys = {};
 let uiVisible = true;
 let gemMilestone = 10000;
+let lastTime = 0; // For Delta Time
 
 let coins = Number(localStorage.getItem("coins")) || 100;
 let gems = Number(localStorage.getItem("gems")) || 10;
@@ -91,7 +92,7 @@ const weaponConfigs = {
     pistol: { cooldown: [25, 18, 12], maxLvl: 2, type: "single", dmg: 1 },
     smg: { cooldown: [8, 5], maxLvl: 1, type: "single", dmg: 0.5 },
     shotgun: { cooldown: [45, 30], maxLvl: 1, type: "triple", dmg: 1 },
-    ar: { cooldown: [10, 6], maxLvl: 1, type: "fast", dmg: 0.7 }
+    ar: { cooldown: [10, 6], maxLvl: 1, type: "fast", dmg: 1 }
 };
 
 function toggleUI() {
@@ -145,6 +146,9 @@ function updateUI() {
     });
 
     document.getElementById("rebirthBtn").style.display = (weaponLevels.pistol >= 2) ? "block" : "none";
+    document.getElementById("armorBtn").style.borderColor = boosters.armor ? "#0f0" : "#4af";
+    document.getElementById("doubleDamageBtn").style.borderColor = boosters.doubleDamage ? "#0f0" : "#4af";
+    document.getElementById("slowEnemiesBtn").style.borderColor = boosters.slowEnemies ? "#0f0" : "#4af";
 }
 
 function buyWeapon(type, cost) {
@@ -157,26 +161,27 @@ function upgradeWeapon(type) {
     else if(type === 'smg') cost = 800;
     else if(type === 'shotgun') cost = 1000;
     else if(type === 'ar') cost = 1500;
-
     if (weaponsOwned[type] && weaponLevels[type] < weaponConfigs[type].maxLvl && coins >= cost) {
         coins -= cost; weaponLevels[type]++; activeWeapon = type; saveProgress(); updateUI();
     }
 }
 
-// FIKSET: Rebirth setter coins til 100
 function rebirth() {
     if (coins >= 500) {
-        coins = 100; // Her skjer magien
+        coins = 100;
         gems += 30;
         weaponLevels = { pistol: 0, smg: 0, shotgun: 0, ar: 0 };
         weaponsOwned = { pistol: false, smg: false, shotgun: false, ar: false };
+        boosters = { armor: false, doubleDamage: false, slowEnemies: false };
         activeWeapon = "none";
         saveProgress(); init();
     }
 }
 
 function buyBooster(type, cost) {
-    if (gems >= cost) { gems -= cost; boosters[type] = true; updateUI(); saveProgress(); }
+    if (gems >= cost && !boosters[type]) { 
+        gems -= cost; boosters[type] = true; updateUI(); saveProgress(); 
+    }
 }
 
 function saveProgress() {
@@ -230,26 +235,26 @@ function fire() {
     shootCooldown = config.cooldown[lvl];
 }
 
-function update() {
-    particles.forEach((p, i) => { p.x += p.vx; p.y += p.vy; p.life -= 0.02; if(p.life <= 0) particles.splice(i,1); });
-    floatingTexts.forEach((t, i) => { t.y -= 1; t.life -= 0.02; if(t.life <= 0) floatingTexts.splice(i,1); });
+function update(sf) {
+    particles.forEach((p, i) => { p.x += p.vx * sf; p.y += p.vy * sf; p.life -= 0.02 * sf; if(p.life <= 0) particles.splice(i,1); });
+    floatingTexts.forEach((t, i) => { t.y -= 1 * sf; t.life -= 0.02 * sf; if(t.life <= 0) floatingTexts.splice(i,1); });
     if (gameOver || paused) return;
     if (player.alive && activeWeapon !== "none" && shootCooldown <= 0) fire();
-    if (shootCooldown > 0) shootCooldown--;
-    stars.forEach(s => { s.y += s.s; if(s.y > 600) s.y = 0; });
+    if (shootCooldown > 0) shootCooldown -= 1 * sf;
+    stars.forEach(s => { s.y += s.s * sf; if(s.y > 600) s.y = 0; });
     if (player.alive) {
-        if ((keys['a'] || keys['arrowleft']) && player.x > 0) player.x -= player.speed;
-        if ((keys['d'] || keys['arrowright']) && player.x < 400 - player.width) player.x += player.speed;
+        if ((keys['a'] || keys['arrowleft']) && player.x > 0) player.x -= player.speed * sf;
+        if ((keys['d'] || keys['arrowright']) && player.x < 400 - player.width) player.x += player.speed * sf;
     }
     bullets.forEach((b, i) => {
-        b.x += b.vx; b.y += b.vy;
+        b.x += b.vx * sf; b.y += b.vy * sf;
         if (b.y < -20 || b.x < -20 || b.x > 420) bullets.splice(i, 1);
     });
-    let enemySpeedMult = boosters.slowEnemies ? 0.5 : 1.0;
+    let enemySpeedMult = (boosters.slowEnemies ? 0.5 : 1.0) * sf;
     enemies.forEach((e, ei) => {
         if (e.type === 'sinus') {
             if (!e.centerX) e.centerX = e.x;
-            e.angle += 0.05; e.x = e.centerX + Math.sin(e.angle) * 50;
+            e.angle += 0.05 * sf; e.x = e.centerX + Math.sin(e.angle) * 50;
             e.y += e.speedY * enemySpeedMult;
         } else { e.y += e.speedY * enemySpeedMult; }
         if (player.alive && player.x < e.x + e.w && player.x + player.width > e.x && player.y < e.y + e.h && player.y + player.height > e.y) {
@@ -259,7 +264,13 @@ function update() {
                 player.alive = false;
                 createExplosion(player.x + 17, player.y + 17, "#0f0", 50); 
                 createExplosion(player.x + 17, player.y + 17, "orange", 30);
-                setTimeout(() => { gameOver = true; if(score > highscore) { highscore = Math.floor(score); saveProgress(); } }, 1000);
+                
+                // Boosters fjernes ved Game Over
+                boosters.armor = false;
+                boosters.doubleDamage = false;
+                boosters.slowEnemies = false;
+
+                setTimeout(() => { gameOver = true; if(score > highscore) { highscore = Math.floor(score); saveProgress(); } updateUI(); }, 1000);
             }
         }
         bullets.forEach((b, bi) => {
@@ -274,7 +285,7 @@ function update() {
         });
         if (e.y > 600) enemies.splice(ei, 1);
     });
-    score += 0.3;
+    score += 0.3 * sf;
     if (score >= gemMilestone) { gems += 2; gemMilestone += 10000; updateUI(); }
 }
 
@@ -330,7 +341,18 @@ function resetGameData() { if(confirm("Slette alt?")) { localStorage.clear(); lo
 
 init();
 setInterval(spawnEnemy, 500); 
-(function loop(){ update(); draw(); requestAnimationFrame(loop); })();
+
+function loop(timestamp) {
+    let deltaTime = timestamp - lastTime;
+    lastTime = timestamp;
+    if (deltaTime > 100) deltaTime = 16.6; 
+    let speedFactor = deltaTime / 16.6;
+
+    update(speedFactor);
+    draw();
+    requestAnimationFrame(loop);
+}
+requestAnimationFrame(loop);
 </script>
 </body>
 </html>
