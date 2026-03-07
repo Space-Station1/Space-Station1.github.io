@@ -40,17 +40,17 @@
             </div>
             <div class="wpn-group">
                 <button id="smgSelect" onclick="selectWeapon('smg')">SMG</button>
-                <button id="buySMGBtn" onclick="buyWeapon('smg', 1000)">Kjøp (1000c)</button>
+                <button id="buySMGBtn" onclick="buyWeapon('smg', 1000)">SMG (1000🪙)</button>
                 <button id="upgradeSMGBtn" onclick="upgradeWeapon('smg')">Oppgrader</button>
             </div>
             <div class="wpn-group">
                 <button id="shotgunSelect" onclick="selectWeapon('shotgun')">Shotgun</button>
-                <button id="buyShotgunBtn" onclick="buyWeapon('shotgun', 750)">Kjøp (750c)</button>
+                <button id="buyShotgunBtn" onclick="buyWeapon('shotgun', 750)">Shotgun (750🪙)</button>
                 <button id="upgradeShotgunBtn" onclick="upgradeWeapon('shotgun')">Oppgrader</button>
             </div>
             <div class="wpn-group">
                 <button id="arSelect" onclick="selectWeapon('ar')">AR</button>
-                <button id="buyARBtn" onclick="buyWeapon('ar', 1200)">Kjøp (1200c)</button>
+                <button id="buyARBtn" onclick="buyWeapon('ar', 1200)">AR (1200🪙)</button>
                 <button id="upgradeARBtn" onclick="upgradeWeapon('ar')">Oppgrader</button>
             </div>
             <button id="rebirthBtn" onclick="rebirth()" style="display:none; background: gold !important; color: black; font-weight: bold;">REBIRTH (500c)</button>
@@ -58,9 +58,9 @@
 
         <div id="shop">
             <span class="section-title">Boosters (Gems)</span>
-            <button id="armorBtn" onclick="buyBooster('armor', 50)">🛡️ Armor (50g)</button>
-            <button id="doubleDamageBtn" onclick="buyBooster('doubleDamage', 50)">🔥 2x Dmg (50g)</button>
-            <button id="slowEnemiesBtn" onclick="buyBooster('slowEnemies', 50)">❄️ Slow (50g)</button>
+            <button id="armorBtn" onclick="buyBooster('armor', 50)">🛡️ Armor (50💎)</button>
+            <button id="doubleDamageBtn" onclick="buyBooster('doubleDamage', 50)">🔥 2x Dmg (50💎)</button>
+            <button id="slowEnemiesBtn" onclick="buyBooster('slowEnemies', 50)">❄️ Slow (50💎)</button>
         </div>
         <button class="reset-btn" onclick="resetGameData()">RESET ALL DATA</button>
     </div>
