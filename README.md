@@ -21,12 +21,12 @@
 <body>
 
 <div class="ui" id="mainUI">
-    <button id="toggleUIBtn" onclick="toggleUI()">Skjul UI</button>
+    <button id="toggleUIBtn" onclick="toggleUI()">Hide UI</button>
     <div id="uiContent">
         <div id="stats">
             <div id="coinsDisplay">Coins: 0</div>
             <div id="gemsDisplay">Gems: 0</div>
-            <div id="highscoreDisplayUI" style="color: #4af; font-size: 11px;">Best: 0</div>
+            <div id="highscoreDisplayUI" style="color: #4af; font-size: 11px;">Highscore: 0</div>
         </div>
         <button onclick="togglePause()">Pause</button>
         <button onclick="restartGame()">Restart</button>
@@ -35,32 +35,32 @@
             <span class="section-title">Våpen (1-4)</span>
             <div class="wpn-group">
                 <button id="pistolSelect" onclick="selectWeapon('pistol')">Pistol</button>
-                <button id="unlockBtn" onclick="buyWeapon('pistol', 0)">Lås opp (1k Score)</button>
-                <button id="upgradePistolBtn" onclick="upgradeWeapon('pistol')">Oppgrader</button>
+                <button id="unlockBtn" onclick="buyWeapon('pistol', 0)">Unlock at (1k Score)</button>
+                <button id="upgradePistolBtn" onclick="upgradeWeapon('pistol')">Upgrade</button>
             </div>
             <div class="wpn-group">
                 <button id="smgSelect" onclick="selectWeapon('smg')">SMG</button>
                 <button id="buySMGBtn" onclick="buyWeapon('smg', 1000)">SMG (1000🪙)</button>
-                <button id="upgradeSMGBtn" onclick="upgradeWeapon('smg')">Oppgrader</button>
+                <button id="upgradeSMGBtn" onclick="upgradeWeapon('smg')">Upgrade</button>
             </div>
             <div class="wpn-group">
                 <button id="shotgunSelect" onclick="selectWeapon('shotgun')">Shotgun</button>
                 <button id="buyShotgunBtn" onclick="buyWeapon('shotgun', 750)">Shotgun (750🪙)</button>
-                <button id="upgradeShotgunBtn" onclick="upgradeWeapon('shotgun')">Oppgrader</button>
+                <button id="upgradeShotgunBtn" onclick="upgradeWeapon('shotgun')">Upgrade</button>
             </div>
             <div class="wpn-group">
                 <button id="arSelect" onclick="selectWeapon('ar')">AR</button>
                 <button id="buyARBtn" onclick="buyWeapon('ar', 1200)">AR (1200🪙)</button>
-                <button id="upgradeARBtn" onclick="upgradeWeapon('ar')">Oppgrader</button>
+                <button id="upgradeARBtn" onclick="upgradeWeapon('ar')">Upgrade</button>
             </div>
-            <button id="rebirthBtn" onclick="rebirth()" style="display:none; background: gold !important; color: black; font-weight: bold;">REBIRTH (500c)</button>
+            <button id="rebirthBtn" onclick="rebirth()" style="display:none; background: gold !important; color: black; font-weight: bold;">REBIRTH (500🪙)</button>
         </div>
 
         <div id="shop">
             <span class="section-title">Boosters (Gems)</span>
-            <button id="armorBtn" onclick="buyBooster('armor', 50)">🛡️ Armor (50💎)</button>
-            <button id="doubleDamageBtn" onclick="buyBooster('doubleDamage', 50)">🔥 2x Dmg (50💎)</button>
-            <button id="slowEnemiesBtn" onclick="buyBooster('slowEnemies', 50)">❄️ Slow (50💎)</button>
+            <button id="armorBtn" onclick="buyBooster('armor', 50)">🛡️Armor (50💎)</button>
+            <button id="doubleDamageBtn" onclick="buyBooster('doubleDamage', 50)">🔥2x Dmg (50💎)</button>
+            <button id="slowEnemiesBtn" onclick="buyBooster('slowEnemies', 50)">❄️Slow (50💎)</button>
         </div>
         <button class="reset-btn" onclick="resetGameData()">RESET ALL DATA</button>
     </div>
@@ -90,9 +90,9 @@ let boosters = { armor: false, doubleDamage: false, slowEnemies: false };
 
 const weaponConfigs = {
     pistol: { cooldown: [25, 18, 12], maxLvl: 2, type: "single", dmg: 1 },
-    smg: { cooldown: [8, 5], maxLvl: 1, type: "single", dmg: 0.5 },
+    smg: { cooldown: [8, 5], maxLvl: 1, type: "single", dmg: 0.3 },
     shotgun: { cooldown: [45, 30], maxLvl: 1, type: "triple", dmg: 1 },
-    ar: { cooldown: [10, 6], maxLvl: 1, type: "fast", dmg: 1 }
+    ar: { cooldown: [10, 8], maxLvl: 1, type: "fast", dmg: 0.6 }
 };
 
 function toggleUI() {
