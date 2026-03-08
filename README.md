@@ -90,15 +90,15 @@ let boosters = { armor: false, doubleDamage: false, slowEnemies: false };
 
 const weaponConfigs = {
     pistol: { cooldown: [25, 18, 12], maxLvl: 2, type: "single", dmg: 1 },
-    smg: { cooldown: [8, 5], maxLvl: 1, type: "single", dmg: 0.3 },
+    smg: { cooldown: [8, 5], maxLvl: 1, type: "single", dmg: 0.5 },
     shotgun: { cooldown: [45, 30], maxLvl: 1, type: "triple", dmg: 1 },
-    ar: { cooldown: [10, 8], maxLvl: 1, type: "fast", dmg: 0.6 }
+    ar: { cooldown: [10, 8], maxLvl: 1, type: "fast", dmg: 0.7 }
 };
 
 function toggleUI() {
     uiVisible = !uiVisible;
     document.getElementById("uiContent").classList.toggle("hidden", !uiVisible);
-    document.getElementById("toggleUIBtn").innerText = uiVisible ? "Skjul UI" : "Vis UI";
+    document.getElementById("toggleUIBtn").innerText = uiVisible ? "Hide UI" : "Show UI";
 }
 
 function selectWeapon(type) {
