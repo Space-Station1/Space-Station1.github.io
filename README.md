@@ -115,25 +115,25 @@ function updateUI() {
     
     const upgPistol = document.getElementById("upgradePistolBtn");
     upgPistol.style.display = weaponsOwned.pistol ? "block" : "none";
-    upgPistol.innerText = weaponLevels.pistol >= 2 ? "Maxed" : `Oppgrader (${(weaponLevels.pistol + 1) * 300}c)`;
+    upgPistol.innerText = weaponLevels.pistol >= 2 ? "Maxed" : `Upgrade (${(weaponLevels.pistol + 1) * 300}🪙)`;
     upgPistol.disabled = weaponLevels.pistol >= 2 || coins < (weaponLevels.pistol + 1) * 300;
     
     document.getElementById("buySMGBtn").style.display = weaponsOwned.smg ? "none" : "block";
     const upgSMG = document.getElementById("upgradeSMGBtn");
     upgSMG.style.display = weaponsOwned.smg ? "block" : "none";
-    upgSMG.innerText = weaponLevels.smg >= 1 ? "Maxed" : "Oppgrader (800c)";
+    upgSMG.innerText = weaponLevels.smg >= 1 ? "Maxed" : "Upgrade (800🪙)";
     upgSMG.disabled = weaponLevels.smg >= 1 || coins < 800;
 
     document.getElementById("buyShotgunBtn").style.display = weaponsOwned.shotgun ? "none" : "block";
     const upgShotgun = document.getElementById("upgradeShotgunBtn");
     upgShotgun.style.display = weaponsOwned.shotgun ? "block" : "none";
-    upgShotgun.innerText = weaponLevels.shotgun >= 1 ? "Maxed" : "Oppgrader (1000c)";
+    upgShotgun.innerText = weaponLevels.shotgun >= 1 ? "Maxed" : "Upgrade (1000🪙)";
     upgShotgun.disabled = weaponLevels.shotgun >= 1 || coins < 1000;
 
     document.getElementById("buyARBtn").style.display = weaponsOwned.ar ? "none" : "block";
     const upgAR = document.getElementById("upgradeARBtn");
     upgAR.style.display = weaponsOwned.ar ? "block" : "none";
-    upgAR.innerText = weaponLevels.ar >= 1 ? "Maxed" : "Oppgrader (1500c)";
+    upgAR.innerText = weaponLevels.ar >= 1 ? "Maxed" : "Upgrade (1500🪙)";
     upgAR.disabled = weaponLevels.ar >= 1 || coins < 1500;
 
     ["pistol", "smg", "shotgun", "ar"].forEach(w => {
@@ -146,7 +146,7 @@ function updateUI() {
     });
 
     document.getElementById("rebirthBtn").style.display = (weaponLevels.pistol >= 2) ? "block" : "none";
-    document.getElementById("armorBtn").style.borderColor = boosters.armor ? "#0f0" : "#4af";
+    document.getElementById("armorBtn").style.borderColor = boosters.armor ? "#2f6" : "#4af";
     document.getElementById("doubleDamageBtn").style.borderColor = boosters.doubleDamage ? "#0f0" : "#4af";
     document.getElementById("slowEnemiesBtn").style.borderColor = boosters.slowEnemies ? "#0f0" : "#4af";
 }
