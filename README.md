@@ -40,20 +40,20 @@
             </div>
             <div class="wpn-group">
                 <button id="smgSelect" onclick="selectWeapon('smg')">SMG</button>
-                <button id="buySMGBtn" onclick="buyWeapon('smg', 1000)">SMG (1000🪙)</button>
+                <button id="buySMGBtn" onclick="buyWeapon('smg', 1000)">SMG (1000🟡)</button>
                 <button id="upgradeSMGBtn" onclick="upgradeWeapon('smg')">Upgrade</button>
             </div>
             <div class="wpn-group">
                 <button id="shotgunSelect" onclick="selectWeapon('shotgun')">Shotgun</button>
-                <button id="buyShotgunBtn" onclick="buyWeapon('shotgun', 750)">Shotgun (750🪙)</button>
+                <button id="buyShotgunBtn" onclick="buyWeapon('shotgun', 750)">Shotgun (750🟡)</button>
                 <button id="upgradeShotgunBtn" onclick="upgradeWeapon('shotgun')">Upgrade</button>
             </div>
             <div class="wpn-group">
                 <button id="arSelect" onclick="selectWeapon('ar')">AR</button>
-                <button id="buyARBtn" onclick="buyWeapon('ar', 1200)">AR (1200🪙)</button>
+                <button id="buyARBtn" onclick="buyWeapon('ar', 1200)">AR (1200🟡)</button>
                 <button id="upgradeARBtn" onclick="upgradeWeapon('ar')">Upgrade</button>
             </div>
-            <button id="rebirthBtn" onclick="rebirth()" style="display:none; background: gold !important; color: black; font-weight: bold;">REBIRTH (500🪙)</button>
+            <button id="rebirthBtn" onclick="rebirth()" style="display:none; background: gold !important; color: black; font-weight: bold;">REBIRTH (500🟡)</button>
         </div>
 
         <div id="shop">
