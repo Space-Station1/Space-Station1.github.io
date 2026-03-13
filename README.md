@@ -57,11 +57,16 @@
         </div>
 
         <div id="shop">
-            <span class="section-title">Boosters (Gems)</span>
-            <button id="armorBtn" onclick="buyBooster('armor', 50)">🛡️Armor (50💎)</button>
-            <button id="doubleDamageBtn" onclick="buyBooster('doubleDamage', 50)">🔥2x Dmg (50💎)</button>
-            <button id="slowEnemiesBtn" onclick="buyBooster('slowEnemies', 50)">❄️Slow (50💎)</button>
-        </div>
+    <span class="section-title">Skins</span>
+    <button id="creeperBtn" onclick="endreSkin('creeper')">Kjøp Creeper (5000🟡)</button>
+    <button onclick="endreSkin('default')">Standard 🚀</button>
+    
+    <span class="section-title">Boosters (Gems)</span>
+    <button id="armorBtn" onclick="buyBooster('armor', 50)">🛡️Armor (50💎)</button>
+    <button id="doubleDamageBtn" onclick="buyBooster('doubleDamage', 50)">🔥2x Dmg (50💎)</button>
+    <button id="slowEnemiesBtn" onclick="buyBooster('slowEnemies', 50)">❄️Slow (50💎)</button>
+</div>
+
         <button class="reset-btn" onclick="resetGameData()">RESET ALL DATA</button>
     </div>
 </div>
@@ -79,6 +84,36 @@ let keys = {};
 let uiVisible = true;
 let gemMilestone = 10000;
 let lastTime = 0; // For Delta Time
+// SKIN LOGIKK
+let currentSkin = "default";
+// Sjekker om spilleren allerede eier skinnet fra før
+let creeperOwned = JSON.parse(localStorage.getItem("creeperOwned")) || false;
+
+const creeperImg = new Image();
+creeperImg.src = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAALHRFWHRDcmVhdGlvbiBUaW1lAFN1biA0IE1hciAyMDEyIDIyOjM1OjI0IC0wNTAwZ7S3VAAAAB50RVh0U29mdHdhcmUAYWRvYmUgcGhvdG9zaG9wIGNzM2u23e4AAABWSURBVDhPY2RgYPhf08DAwMAAxH9BeH9V9X8Ym7mZEUj8PzL28fHByIDYv8AIBP+PhP8zMjL8RxYAsX+BEYj9C4xA7F9gBGL/AiMQ+xcYgdjMDIyMjIwMAIB2P0F/D9pXAAAAAElFTkSuQmCC";
+
+function endreSkin(valg) {
+    if (valg === 'creeper') {
+        if (creeperOwned) {
+            currentSkin = 'creeper';
+        } else {
+            if (coins >= 5000) {
+                coins -= 5000;
+                creeperOwned = true;
+                currentSkin = 'creeper';
+                localStorage.setItem("creeperOwned", true);
+                saveProgress(); // Lagrer mynter
+                updateUI();     // Oppdaterer knapper
+                alert("Creeper skin kjøpt!");
+            } else {
+                alert("You need 5000 coins!");
+            }
+        }
+    } else {
+        currentSkin = 'default';
+    }
+    updateUI();
+}
 
 let coins = Number(localStorage.getItem("coins")) || 100;
 let gems = Number(localStorage.getItem("gems")) || 10;
@@ -89,10 +124,10 @@ let weaponLevels = JSON.parse(localStorage.getItem("weaponLevels")) || { pistol:
 let boosters = { armor: false, doubleDamage: false, slowEnemies: false };
 
 const weaponConfigs = {
-    pistol: { cooldown: [25, 18, 12], maxLvl: 2, type: "single", dmg: 1 },
+    pistol: { cooldown: [25, 18, 19], maxLvl: 2, type: "single", dmg: 1 },
     smg: { cooldown: [8, 5], maxLvl: 1, type: "single", dmg: 0.5 },
     shotgun: { cooldown: [45, 30], maxLvl: 1, type: "triple", dmg: 1 },
-    ar: { cooldown: [11, 11], maxLvl: 1, type: "fast", dmg: 1 }
+    ar: { cooldown: [10, 13], maxLvl: 1, type: "fast", dmg: 1 }
 };
 
 function toggleUI() {
@@ -141,7 +176,7 @@ function updateUI() {
         if(btn) {
             btn.style.display = weaponsOwned[w] ? "block" : "none";
             btn.className = activeWeapon === w ? "active-wpn" : "";
-            btn.innerText = activeWeapon === w ? w.toUpperCase() + " (equipped)" : "Bruk " + w;
+            btn.innerText = activeWeapon === w ? w.toUpperCase() + " (equipped)" : "Use " + w;
         }
     });
 
@@ -149,6 +184,17 @@ function updateUI() {
     document.getElementById("armorBtn").style.borderColor = boosters.armor ? "#2f6" : "#4af";
     document.getElementById("doubleDamageBtn").style.borderColor = boosters.doubleDamage ? "#0f0" : "#4af";
     document.getElementById("slowEnemiesBtn").style.borderColor = boosters.slowEnemies ? "#0f0" : "#4af";
+    const cBtn = document.getElementById("creeperBtn");
+    if (creeperOwned) {
+        cBtn.innerText = currentSkin === 'creeper' ? "Creeper (equipped)" : "Use Creeper 🟩";
+        cBtn.style.borderColor = "#0f0";
+        cBtn.disabled = false;
+        cBtn.style.opacity = "1";
+    } else {
+        cBtn.innerText = "Buy Creeper (5000🟡)";
+        cBtn.disabled = coins < 5000;
+        cBtn.style.opacity = coins < 5000 ? "0.5" : "1";
+    }
 }
 
 function buyWeapon(type, cost) {
@@ -295,10 +341,46 @@ function draw() {
     particles.forEach(p => { ctx.globalAlpha = p.life; ctx.fillStyle = p.color; ctx.fillRect(p.x, p.y, 4, 4); });
     floatingTexts.forEach(t => { ctx.globalAlpha = t.life; ctx.fillStyle = t.color; ctx.font="bold 14px Arial"; ctx.fillText(t.text, t.x, t.y); });
     ctx.globalAlpha = 1;
-    if (player.alive) {
-        ctx.fillStyle = (boosters.armor && !player.armorUsed) ? '#4af' : '#0f0';
-        ctx.fillRect(player.x, player.y, player.width, player.height);
+               if (player.alive) {
+        if (currentSkin === "creeper") {
+            // Tegn selve hode-firkanten (Mørkegrønn base)
+            ctx.fillStyle = "#03AC13";
+            ctx.fillRect(player.x, player.y, player.width, player.height);
+
+            // Lag litt "piksel-mønster" for tekstur (lysere grønne flekker)
+            ctx.fillStyle = "#3cb371";
+            ctx.fillRect(player.x + 2, player.y + 2, 8, 8);
+            ctx.fillRect(player.x + 20, player.y + 25, 10, 5);
+            ctx.fillRect(player.x + 5, player.y + 20, 5, 5);
+
+            // CREEPER ANSIKT (Svart)
+            ctx.fillStyle = "black";
+            
+            // Øyne
+            ctx.fillRect(player.x + 6, player.y + 8, 8, 8);  // Venstre øye
+            ctx.fillRect(player.x + 21, player.y + 8, 8, 8); // Høyre øye
+            
+            // Munn/Nese (den karakteristiske Creeper-formen)
+            ctx.fillRect(player.x + 13, player.y + 16, 9, 7);  // Nese
+            ctx.fillRect(player.x + 9, player.y + 20, 17, 9); // Overleppe
+            ctx.fillRect(player.x + 9, player.y + 26, 6, 6);  // Venstre "tann"
+            ctx.fillRect(player.x + 20, player.y + 26, 6, 6); // Høyre "tann"
+
+        } else {
+            // Standard skin (grønn firkant)
+            ctx.fillStyle = (boosters.armor && !player.armorUsed) ? '#4af' : '#0f0';
+            ctx.fillRect(player.x, player.y, player.width, player.height);
+        }
+
+        // Armor-effekt (blå glød rundt hvis du har skjold)
+        if (boosters.armor && !player.armorUsed) {
+            ctx.strokeStyle = "#4af";
+            ctx.lineWidth = 3;
+            ctx.strokeRect(player.x - 2, player.y - 2, player.width + 4, player.height + 4);
+        }
     }
+
+    
     bullets.forEach(b => { ctx.fillStyle = boosters.doubleDamage ? 'orange' : 'yellow'; ctx.fillRect(b.x, b.y, 6, 12); });
     enemies.forEach(e => { 
         ctx.fillStyle = e.color; ctx.fillRect(e.x, e.y, e.w, e.h); 
@@ -312,6 +394,20 @@ function draw() {
     ctx.fillStyle = '#4af'; ctx.font = '12px Arial';
     ctx.fillText(`Highscore: ${Math.floor(highscore)}`, 10, 45);
     if(gameOver) { ctx.fillStyle="red"; ctx.font="30px Arial"; ctx.fillText("GAME OVER", 110, 300); }
+    // Tegn PAUSE-tekst midt på skjermen
+    if (paused && !gameOver) {
+        ctx.fillStyle = "rgba(0, 0, 0, 0.5)"; // Gjør bakgrunnen litt mørkere
+        ctx.fillRect(0, 0, 400, 600);
+        
+        ctx.fillStyle = "white";
+        ctx.font = "bold 40px Arial";
+        ctx.textAlign = "center";
+        ctx.fillText("PAUSE", 200, 300);
+        
+        ctx.font = "16px Arial";
+        ctx.fillText("Press the pause button to continue", 200, 340);
+        ctx.textAlign = "start"; // Nullstill tekstjustering for andre tekster
+    }
 }
 
 window.addEventListener("keydown", e => { 
@@ -335,7 +431,19 @@ const handleMove = (e) => {
 canvas.addEventListener("mousemove", handleMove);
 canvas.addEventListener("touchmove", (e) => { e.preventDefault(); handleMove(e); }, { passive: false });
 
-function togglePause() { paused = !paused; }
+function togglePause() {
+    paused = !paused;
+    const pBtn = document.getElementById("pauseBtn");
+    
+    if (paused) {
+        pBtn.innerText = "Fortsett"; // Teksten når spillet ER pauset
+        pBtn.style.backgroundColor = "#440000"; // Valgfritt: gjør knappen rødlig når pauset
+    } else {
+        pBtn.innerText = "Pause"; // Teksten når spillet kjører
+        pBtn.style.backgroundColor = "#222"; // Tilbake til vanlig farge
+    }
+}
+
 function restartGame() { init(); }
 function resetGameData() { if(confirm("Slette alt?")) { localStorage.clear(); location.reload(); } }
 
