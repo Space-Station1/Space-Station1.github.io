@@ -257,7 +257,7 @@ function spawnEnemy() {
     let extraChance = Math.min(0.2, score / 100000);
     let r = Math.random();
     if (r < 0.15 && score > 2000) {
-        let hp = 5 + Math.floor(score / 10000);
+        let hp =6 + Math.floor(score / 10000);
         enemies.push({x: Math.random()*350, y: -50, w: 45, h: 45, speedY: 1.2 * BASE_SPEED, color: '#800', coins: 50, hp: hp, maxHp: hp, isHeavy: true, type: 'heavy'});
     } else if (r < 0.30 + extraChance && score > 1000) {
         enemies.push({x: Math.random()*300 + 50, y: -40, w: 25, h: 25, speedY: 2 * BASE_SPEED, color: '#a0f', coins: 20, hp: 1, isHeavy: false, type: 'sinus', centerX: 0, angle: 0});
@@ -436,7 +436,7 @@ function togglePause() {
     const pBtn = document.getElementById("pauseBtn");
     
     if (paused) {
-        pBtn.innerText = "Fortsett"; // Teksten når spillet ER pauset
+        pBtn.innerText = "Continue"; // Teksten når spillet ER pauset
         pBtn.style.backgroundColor = "#440000"; // Valgfritt: gjør knappen rødlig når pauset
     } else {
         pBtn.innerText = "Pause"; // Teksten når spillet kjører
@@ -448,7 +448,25 @@ function restartGame() { init(); }
 function resetGameData() { if(confirm("Slette alt?")) { localStorage.clear(); location.reload(); } }
 
 init();
-setInterval(spawnEnemy, 500); 
+let lastSpawnTime = 0;
+function handleEnemySpawning(timestamp) {
+    // Grunnhastighet er 600ms. Vi trekker fra tid basert på score.
+    // Jo høyere score, jo kortere tid mellom hver spawn.
+    let spawnDelay = Math.max(150, 600 - (Math.floor(score / 10000) * 100));
+
+    if (timestamp - lastSpawnTime > spawnDelay) {
+        spawnEnemy();
+        
+        // Bonus-spawns: Per 10 000 poeng spawner vi 2 ekstra fiender
+        let extraEnemies = Math.floor(score / 10000) * 2;
+        for (let i = 0; i < extraEnemies; i++) {
+            spawnEnemy();
+        }
+        
+        lastSpawnTime = timestamp;
+    }
+}
+
 
 function loop(timestamp) {
     let deltaTime = timestamp - lastTime;
@@ -459,6 +477,19 @@ function loop(timestamp) {
     update(speedFactor);
     draw();
     requestAnimationFrame(loop);
+function loop(timestamp) {
+    let deltaTime = timestamp - lastTime;
+    lastTime = timestamp;
+    if (deltaTime > 100) deltaTime = 16.6; 
+    let speedFactor = deltaTime / 16.6;
+
+    update(speedFactor);
+    // LEGG TIL DENNE LINJEN HER:
+    handleEnemySpawning(timestamp); 
+    
+    draw();
+    requestAnimationFrame(loop);
+}
 }
 requestAnimationFrame(loop);
 </script>
