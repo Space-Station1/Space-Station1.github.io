@@ -104,7 +104,7 @@ function endreSkin(valg) {
                 localStorage.setItem("creeperOwned", true);
                 saveProgress(); // Lagrer mynter
                 updateUI();     // Oppdaterer knapper
-                alert("Already purchased!");
+                alert("You purchased the creeper skin");
             } else {
                 alert("You need 5000 coins!");
             }
