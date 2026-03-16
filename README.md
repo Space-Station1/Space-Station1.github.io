@@ -32,7 +32,7 @@
         <button onclick="restartGame()">Restart</button>
         
         <div id="weaponShop">
-            <span class="section-title">Våpen (1-4)</span>
+            <span class="section-title">Weapons (1-4)</span>
             <div class="wpn-group">
                 <button id="pistolSelect" onclick="selectWeapon('pistol')">Pistol</button>
                 <button id="unlockBtn" onclick="buyWeapon('pistol', 0)">Unlock at (1k Score)</button>
@@ -58,7 +58,7 @@
 
         <div id="shop">
     <span class="section-title">Skins</span>
-    <button id="creeperBtn" onclick="endreSkin('creeper')">Kjøp Creeper (5000🟡)</button>
+    <button id="creeperBtn" onclick="endreSkin('creeper')">Buy Creeper (5000🟡)</button>
     <button onclick="endreSkin('default')">Standard 🚀</button>
     
     <span class="section-title">Boosters (Gems)</span>
@@ -104,7 +104,7 @@ function endreSkin(valg) {
                 localStorage.setItem("creeperOwned", true);
                 saveProgress(); // Lagrer mynter
                 updateUI();     // Oppdaterer knapper
-                alert("Creeper skin kjøpt!");
+                alert("Already purchased!");
             } else {
                 alert("You need 5000 coins!");
             }
@@ -204,7 +204,7 @@ function buyWeapon(type, cost) {
 function upgradeWeapon(type) {
     let cost = 0;
     if(type === 'pistol') cost = (weaponLevels.pistol + 1) * 300;
-    else if(type === 'smg') cost = 800;
+    else if(type === 'smg') cost = 1100;
     else if(type === 'shotgun') cost = 1000;
     else if(type === 'ar') cost = 1500;
     if (weaponsOwned[type] && weaponLevels[type] < weaponConfigs[type].maxLvl && coins >= cost) {
