@@ -6,6 +6,21 @@
     body { margin:0; background:black; color:white; display:flex; justify-content:center; align-items:center; height:100vh; font-family:Arial; overflow:hidden; touch-action: none; }
     canvas { background:#05080f; border:2px solid #4af; max-width: 100vw; max-height: 100vh; cursor: crosshair; }
     .ui { position:absolute; top:10px; right:10px; display:flex; flex-direction:column; gap:5px; z-index:10; width: 195px; background: rgba(0,0,0,0.85); padding: 10px; border-radius: 8px; border: 1px solid #4af; max-height: 90vh; overflow-y: auto; }
+    /* Ny klasse for venstremenyen */
+.ui-left { 
+    position: absolute; 
+    top: 10px; 
+    left: 10px; 
+    display: flex; 
+    flex-direction: column; 
+    gap: 5px; 
+    z-index: 10; 
+    width: 160px; 
+    background: rgba(0,0,0,0.85); 
+    padding: 10px; 
+    border-radius: 8px; 
+    border: 1px solid #4af; 
+}
     button { padding:8px; font-size:11px; cursor:pointer; background: #222; color: white; border: 1px solid #4af; border-radius: 4px; width: 100%; margin-bottom: 2px; }
     button:active { background: #4af; }
     button.active-wpn { background: #004400; border-color: #0f0; color: #0f0; }
@@ -20,6 +35,20 @@
 </head>
 <body>
 
+    <div class="ui-left" id="skinShop">
+    <div id="shop">
+        <span class="section-title">Skins</span>
+        <button id="coreBtn" onclick="endreSkin('The Core')">Buy The Core (7000🟡)</button>
+        <button id="pigBtn" onclick="endreSkin('pig')">Buy Pig (5500🟡)</button>
+        <button id="creeperBtn" onclick="endreSkin('creeper')">Buy Creeper (5000🟡)</button>
+        <button onclick="endreSkin('default')">Standard 🚀</button>
+        
+        <span class="section-title">Boosters (Gems)</span>
+        <button id="armorBtn" onclick="buyBooster('armor', 50)">🛡️Armor (50💎)</button>
+        <button id="doubleDamageBtn" onclick="buyBooster('doubleDamage', 50)">🔥2x Dmg (50💎)</button>
+        <button id="slowEnemiesBtn" onclick="buyBooster('slowEnemies', 50)">❄️Slow (50💎)</button>
+    </div>
+</div>
 <div class="ui" id="mainUI">
     <button id="toggleUIBtn" onclick="toggleUI()">Hide UI</button>
     <div id="uiContent">
@@ -28,7 +57,7 @@
             <div id="gemsDisplay">Gems: 0</div>
             <div id="highscoreDisplayUI" style="color: #4af; font-size: 11px;">Highscore: 0</div>
         </div>
-        <button onclick="togglePause()">Pause</button>
+        <button id="pauseBtn" onclick="togglePause()">Pause</button>
         <button onclick="restartGame()">Restart</button>
         
         <div id="weaponShop">
@@ -40,7 +69,7 @@
             </div>
             <div class="wpn-group">
                 <button id="smgSelect" onclick="selectWeapon('smg')">SMG</button>
-                <button id="buySMGBtn" onclick="buyWeapon('smg', 1000)">SMG (1000🟡)</button>
+                <button id="buySMGBtn" onclick="buyWeapon('smg', 1100)">SMG (1100🟡)</button>
                 <button id="upgradeSMGBtn" onclick="upgradeWeapon('smg')">Upgrade</button>
             </div>
             <div class="wpn-group">
@@ -56,17 +85,6 @@
             <button id="rebirthBtn" onclick="rebirth()" style="display:none; background: gold !important; color: black; font-weight: bold;">REBIRTH (500🟡)</button>
         </div>
 
-        <div id="shop">
-    <span class="section-title">Skins</span>
-    <button id="creeperBtn" onclick="endreSkin('creeper')">Buy Creeper (5000🟡)</button>
-    <button onclick="endreSkin('default')">Standard 🚀</button>
-    
-    <span class="section-title">Boosters (Gems)</span>
-    <button id="armorBtn" onclick="buyBooster('armor', 50)">🛡️Armor (50💎)</button>
-    <button id="doubleDamageBtn" onclick="buyBooster('doubleDamage', 50)">🔥2x Dmg (50💎)</button>
-    <button id="slowEnemiesBtn" onclick="buyBooster('slowEnemies', 50)">❄️Slow (50💎)</button>
-</div>
-
         <button class="reset-btn" onclick="resetGameData()">RESET ALL DATA</button>
     </div>
 </div>
@@ -79,6 +97,8 @@ const ctx = canvas.getContext("2d");
 const BASE_SPEED = 1.3;
 
 let player, enemies, bullets, stars, particles, floatingTexts;
+let powerups = []; // Ny liste for drops
+let rainbowTimer = 0; // Ny timer for effekten
 let score = 0, gameOver = false, paused = false, shootCooldown = 0;
 let keys = {};
 let uiVisible = true;
@@ -88,29 +108,38 @@ let lastTime = 0; // For Delta Time
 let currentSkin = "default";
 // Sjekker om spilleren allerede eier skinnet fra før
 let creeperOwned = JSON.parse(localStorage.getItem("creeperOwned")) || false;
-
-const creeperImg = new Image();
-creeperImg.src = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAALHRFWHRDcmVhdGlvbiBUaW1lAFN1biA0IE1hciAyMDEyIDIyOjM1OjI0IC0wNTAwZ7S3VAAAAB50RVh0U29mdHdhcmUAYWRvYmUgcGhvdG9zaG9wIGNzM2u23e4AAABWSURBVDhPY2RgYPhf08DAwMAAxH9BeH9V9X8Ym7mZEUj8PzL28fHByIDYv8AIBP+PhP8zMjL8RxYAsX+BEYj9C4xA7F9gBGL/AiMQ+xcYgdjMDIyMjIwMAIB2P0F/D9pXAAAAAElFTkSuQmCC";
-
+let TheCoreOwned = JSON.parse(localStorage.getItem("TheCoreOwned")) || false;
+let pigOwned = JSON.parse(localStorage.getItem("pigOwned")) || false;
+    
 function endreSkin(valg) {
     if (valg === 'creeper') {
-        if (creeperOwned) {
-            currentSkin = 'creeper';
-        } else {
-            if (coins >= 5000) {
-                coins -= 5000;
-                creeperOwned = true;
-                currentSkin = 'creeper';
-                localStorage.setItem("creeperOwned", true);
-                saveProgress(); // Lagrer mynter
-                updateUI();     // Oppdaterer knapper
-            } else {
-                alert("You need 5000 coins!");
-            }
+        if (creeperOwned) { currentSkin = 'creeper'; }
+        else if (coins >= 5000) {
+            coins -= 5000; creeperOwned = true; currentSkin = 'creeper';
+            localStorage.setItem("creeperOwned", true);
         }
-    } else {
-        currentSkin = 'default';
+    } 
+    else if (valg === 'The Core') { 
+    if (TheCoreOwned) { // Bruk det nye navnet uten mellomrom her også
+        currentSkin = 'The Core'; 
     }
+    else if (coins >= 7000) {
+        coins -= 7000; 
+        TheCoreOwned = true; // Match variabelnavnet her
+        currentSkin = 'The Core';
+        localStorage.setItem("TheCoreOwned", true);
+    } 
+}
+    // NY DEL FOR GRIS:
+    else if (valg === 'pig') {
+    if (pigOwned) { currentSkin = 'pig'; }
+    else if (coins >= 5500) {
+        coins -= 5500; pigOwned = true; currentSkin = 'pig';
+        localStorage.setItem("pigOwned", true);
+    } 
+} 
+    else { currentSkin = 'default'; }
+    saveProgress();
     updateUI();
 }
 
@@ -123,15 +152,25 @@ let weaponLevels = JSON.parse(localStorage.getItem("weaponLevels")) || { pistol:
 let boosters = { armor: false, doubleDamage: false, slowEnemies: false };
 
 const weaponConfigs = {
-    pistol: { cooldown: [25, 21, 17], maxLvl: 2, type: "single", dmg: 1 },
+    pistol: { cooldown: [25, 21, 18], maxLvl: 2, type: "single", dmg: 1 },
     smg: { cooldown: [8, 5], maxLvl: 1, type: "single", dmg: 0.5 },
     shotgun: { cooldown: [45, 30], maxLvl: 1, type: "triple", dmg: 1 },
-    ar: { cooldown: [15, 11], maxLvl: 1, type: "fast", dmg: 1 }
+    ar: { cooldown: [14, 11], maxLvl: 1, type: "fast", dmg: 1 }
 };
 
 function toggleUI() {
     uiVisible = !uiVisible;
+    
+    // Skjuler innholdet i høyre meny
     document.getElementById("uiContent").classList.toggle("hidden", !uiVisible);
+    
+    // Skjuler hele venstre meny (skins)
+    const leftUI = document.getElementById("skinShop");
+    if (leftUI) {
+        leftUI.classList.toggle("hidden", !uiVisible);
+    }
+    
+    // Oppdaterer teksten på knappen
     document.getElementById("toggleUIBtn").innerText = uiVisible ? "Hide UI" : "Show UI";
 }
 
@@ -155,8 +194,8 @@ function updateUI() {
     document.getElementById("buySMGBtn").style.display = weaponsOwned.smg ? "none" : "block";
     const upgSMG = document.getElementById("upgradeSMGBtn");
     upgSMG.style.display = weaponsOwned.smg ? "block" : "none";
-    upgSMG.innerText = weaponLevels.smg >= 1 ? "Maxed" : "Upgrade (800🟡)";
-    upgSMG.disabled = weaponLevels.smg >= 1 || coins < 800;
+    upgSMG.innerText = weaponLevels.smg >= 1 ? "Maxed" : "Upgrade (1100🟡)";
+    upgSMG.disabled = weaponLevels.smg >= 1 || coins < 1000;
 
     document.getElementById("buyShotgunBtn").style.display = weaponsOwned.shotgun ? "none" : "block";
     const upgShotgun = document.getElementById("upgradeShotgunBtn");
@@ -178,24 +217,45 @@ function updateUI() {
             btn.innerText = activeWeapon === w ? w.toUpperCase() + " (equipped)" : "Use " + w;
         }
     });
-
     document.getElementById("rebirthBtn").style.display = (weaponLevels.pistol >= 2) ? "block" : "none";
     document.getElementById("armorBtn").style.borderColor = boosters.armor ? "#2f6" : "#4af";
     document.getElementById("doubleDamageBtn").style.borderColor = boosters.doubleDamage ? "#0f0" : "#4af";
     document.getElementById("slowEnemiesBtn").style.borderColor = boosters.slowEnemies ? "#0f0" : "#4af";
+    const pBtn = document.getElementById("pigBtn");
+    if (pBtn) {
+        if (pigOwned) {
+            pBtn.innerText = currentSkin === 'pig' ? "Pig (Equipped)" : "Use Pig 🐷";
+            pBtn.style.borderColor = "#f9f";
+        } else {
+            pBtn.innerText = "Buy Pig (5500🟡)";
+            pBtn.disabled = coins < 5500;
+        }
+    }
+    
+    // Oppdater Neon/Core-knappen
+    const tBtn = document.getElementById("coreBtn");
+    if (tBtn) {
+        if (TheCoreOwned) {
+            tBtn.innerText = currentSkin === 'The Core' ? "The Core (Equipped)" : "Use The Core";
+            tBtn.style.borderColor = "#f0f";
+        } else {
+            tBtn.innerText = "Buy The Core (7000🟡)";
+            tBtn.disabled = coins < 7000;
+        }
+    }
+
+    // Oppdater Creeper-knappen
     const cBtn = document.getElementById("creeperBtn");
-    if (creeperOwned) {
-        cBtn.innerText = currentSkin === 'creeper' ? "Creeper (equipped)" : "Use Creeper 🟩";
-        cBtn.style.borderColor = "#0f0";
-        cBtn.disabled = false;
-        cBtn.style.opacity = "1";
-    } else {
-        cBtn.innerText = "Buy Creeper (5000🟡)";
-        cBtn.disabled = coins < 5000;
-        cBtn.style.opacity = coins < 5000 ? "0.5" : "1";
+    if (cBtn) {
+        if (creeperOwned) {
+            cBtn.innerText = currentSkin === 'creeper' ? "Creeper (Equipped)" : "Use Creeper 🟩";
+            cBtn.style.borderColor = "#0f0";
+        } else {
+            cBtn.innerText = "Buy Creeper (5000🟡)";
+            cBtn.disabled = coins < 5000;
+        }
     }
 }
-
 function buyWeapon(type, cost) {
     if (coins >= cost) { coins -= cost; weaponsOwned[type] = true; activeWeapon = type; saveProgress(); updateUI(); }
 }
@@ -243,6 +303,9 @@ function init() {
     score = 0; gemMilestone = 10000;
     gameOver = false; paused = false; shootCooldown = 0;
     updateUI();
+    // Legg disse nederst i init()-funksjonen
+    powerups = []; 
+    rainbowTimer = 0;
 }
 
 function createExplosion(x, y, color, count = 20) {
@@ -277,61 +340,106 @@ function fire() {
     } else {
         bullets.push({x: player.x + 15, y: player.y, vx: 0, vy: -12, dmg: damage});
     }
-    shootCooldown = config.cooldown[lvl];
+    shootCooldown = rainbowTimer > 0 ? config.cooldown[lvl] / 3 : config.cooldown[lvl]; // 3x raskere!
 }
 
 function update(sf) {
+    if (rainbowTimer > 0) rainbowTimer -= 1 * sf;
     particles.forEach((p, i) => { p.x += p.vx * sf; p.y += p.vy * sf; p.life -= 0.02 * sf; if(p.life <= 0) particles.splice(i,1); });
     floatingTexts.forEach((t, i) => { t.y -= 1 * sf; t.life -= 0.02 * sf; if(t.life <= 0) floatingTexts.splice(i,1); });
+    
     if (gameOver || paused) return;
+
+    if (player.alive) score += 0.5 * sf;
+    
     if (player.alive && activeWeapon !== "none" && shootCooldown <= 0) fire();
     if (shootCooldown > 0) shootCooldown -= 1 * sf;
+    
     stars.forEach(s => { s.y += s.s * sf; if(s.y > 600) s.y = 0; });
+    
     if (player.alive) {
         if ((keys['a'] || keys['arrowleft']) && player.x > 0) player.x -= player.speed * sf;
         if ((keys['d'] || keys['arrowright']) && player.x < 400 - player.width) player.x += player.speed * sf;
     }
+    
     bullets.forEach((b, i) => {
         b.x += b.vx * sf; b.y += b.vy * sf;
         if (b.y < -20 || b.x < -20 || b.x > 420) bullets.splice(i, 1);
     });
+
     let enemySpeedMult = (boosters.slowEnemies ? 0.5 : 1.0) * sf;
+    
     enemies.forEach((e, ei) => {
         if (e.type === 'sinus') {
             if (!e.centerX) e.centerX = e.x;
             e.angle += 0.05 * sf; e.x = e.centerX + Math.sin(e.angle) * 50;
             e.y += e.speedY * enemySpeedMult;
-        } else { e.y += e.speedY * enemySpeedMult; }
-        if (player.alive && player.x < e.x + e.w && player.x + player.width > e.x && player.y < e.y + e.h && player.y + player.height > e.y) {
-            if (boosters.armor && !player.armorUsed) { 
-                player.armorUsed = true; enemies.splice(ei, 1); createExplosion(player.x+17, player.y, "#4af"); 
-            } else { 
-                player.alive = false;
-                createExplosion(player.x + 17, player.y + 17, "#0f0", 50); 
-                createExplosion(player.x + 17, player.y + 17, "orange", 30);
-
-                // Boosters fjernes ved Game Over
-                boosters.armor = false;
-                boosters.doubleDamage = false;
-                boosters.slowEnemies = false;
-
-                setTimeout(() => { gameOver = true; if(score > highscore) { highscore = Math.floor(score); saveProgress(); } updateUI(); }, 1000);
-            }
+        } else { 
+            e.y += e.speedY * enemySpeedMult; 
         }
+
+    // Spiller treffer fiende
+    if (player.alive && player.x < e.x + e.w && player.x + player.width > e.x && player.y < e.y + e.h && player.y + player.height > e.y) {
+    
+    // SJEKK 1: Er vi i Rainbow Mode? (Da dør fienden, ikke vi)
+    if (rainbowTimer > 0) {
+        enemies.splice(ei, 1);
+        createExplosion(e.x + e.w/2, e.y + e.h/2, "white", 10);
+        score += (e.isHeavy ? 500 : 100);
+        coins += (e.coins || 10);
+        updateUI();
+    } 
+    // SJEKK 2: Har vi Armor?
+    else if (boosters.armor && !player.armorUsed) { 
+        player.armorUsed = true; 
+        enemies.splice(ei, 1); 
+        createExplosion(player.x+17, player.y, "#4af"); 
+    } 
+    // ELLERS: Vi dør
+    else { 
+        player.alive = false;
+        createExplosion(player.x + 17, player.y + 17, "#0f0", 50); 
+        createExplosion(player.x + 17, player.y + 17, "orange", 30);
+        boosters.armor = false; boosters.doubleDamage = false; boosters.slowEnemies = false;
+        setTimeout(() => { gameOver = true; if(score > highscore) { highscore = Math.floor(score); saveProgress(); } updateUI(); }, 1000);
+    }
+}
+
+        // Kuler treffer fiende
         bullets.forEach((b, bi) => {
             if (b.x < e.x + e.w && b.x + 6 > e.x && b.y < e.y + e.h && b.y + 12 > e.y) {
-                e.hp -= (b.dmg || 1); bullets.splice(bi, 1);
+                e.hp -= (b.dmg || 1); 
+                bullets.splice(bi, 1);
+                
                 if (e.hp <= 0) {
-                    if (Math.random() < 0.02) { gems += 5; floatingTexts.push({x: e.x, y: e.y, text: "GEMS! +5", color: "#a4f", life: 1}); }
-                    coins += (e.coins || 10); score += (e.isHeavy ? 500 : 100); createExplosion(e.x+e.w/2, e.y+e.h/2, e.color);
-                    enemies.splice(ei, 1); updateUI();
+                    if (Math.random() < 0.05) { 
+                        gems += 5; 
+                        floatingTexts.push({x: e.x, y: e.y, text: "+5 GEMS!", color: "#a4f", life: 1}); 
+                    }
+                    coins += (e.coins || 10); 
+                    score += (e.isHeavy ? 500 : 100); 
+                    createExplosion(e.x+e.w/2, e.y+e.h/2, e.color);
+
+                    if (Math.random() < 0.01) {
+                        powerups.push({ x: e.x, y: e.y, w: 25, h: 25, speedY: 2 });
+                    }
+
+                    enemies.splice(ei, 1); 
+                    updateUI();
                 }
-            }
+            }   
         });
-        if (e.y > 600) enemies.splice(ei, 1);
+    }); // Denne lukker enemies.forEach
+
+    powerups.forEach((p, pi) => {
+        p.y += p.speedY * sf;
+        if (player.alive && player.x < p.x + p.w && player.x + player.width > p.x && player.y < p.y + p.h && player.y + player.height > p.y) {
+            rainbowTimer = 500;
+            powerups.splice(pi, 1);
+            floatingTexts.push({x: player.x, y: player.y - 20, text: "ULTRA RAINBOW!", color: "#f0f", life: 2});
+        }
+        if (p.y > 600) powerups.splice(pi, 1);
     });
-    score += 0.3 * sf;
-    if (score >= gemMilestone) { gems += 2; gemMilestone += 10000; updateUI(); }
 }
 
 function draw() {
@@ -340,47 +448,102 @@ function draw() {
     particles.forEach(p => { ctx.globalAlpha = p.life; ctx.fillStyle = p.color; ctx.fillRect(p.x, p.y, 4, 4); });
     floatingTexts.forEach(t => { ctx.globalAlpha = t.life; ctx.fillStyle = t.color; ctx.font="bold 14px Arial"; ctx.fillText(t.text, t.x, t.y); });
     ctx.globalAlpha = 1;
-               if (player.alive) {
-        if (currentSkin === "creeper") {
-            // Tegn selve hode-firkanten (Mørkegrønn base)
+if (player.alive) {
+                if (currentSkin === "creeper") {
+            // Bakgrunn (Grønn)
             ctx.fillStyle = "#03AC13";
             ctx.fillRect(player.x, player.y, player.width, player.height);
-
-            // Lag litt "piksel-mønster" for tekstur (lysere grønne flekker)
-            ctx.fillStyle = "#3cb371";
-            ctx.fillRect(player.x + 2, player.y + 2, 8, 8);
-            ctx.fillRect(player.x + 20, player.y + 25, 10, 5);
-            ctx.fillRect(player.x + 5, player.y + 20, 5, 5);
-
-            // CREEPER ANSIKT (Svart)
+            
             ctx.fillStyle = "black";
+            // Øyne (Symmetrisk plassert)
+            ctx.fillRect(player.x + 5, player.y + 7, 8, 8);  
+            ctx.fillRect(player.x + 22, player.y + 7, 8, 8);
             
-            // Øyne
-            ctx.fillRect(player.x + 6, player.y + 8, 8, 8);  // Venstre øye
-            ctx.fillRect(player.x + 21, player.y + 8, 8, 8); // Høyre øye
+            // Munn/Nese (Den klassiske Creeper-formen)
+            // Midtdelen (nese/overleppe)
+            ctx.fillRect(player.x + 13, player.y + 15, 9, 10); 
+            // Sidene som går ned (leppene)
+            ctx.fillRect(player.x + 9, player.y + 20, 17, 8);  
+            // Fjerner det som er under "haken" for å få riktig form
+            ctx.fillStyle = "#03AC13";
+            ctx.fillRect(player.x + 13, player.y + 25, 9, 3);
+        }
+        else if (currentSkin === "The Core") {
+            // The Core design
+            let hue = (Date.now() * 0.1) % 360;
+            ctx.fillStyle = "#000";
+            ctx.strokeStyle = `hsl(${hue}, 100%, 50%)`;
+            ctx.lineWidth = 3;
             
-            // Munn/Nese (den karakteristiske Creeper-formen)
-            ctx.fillRect(player.x + 13, player.y + 16, 9, 7);  // Nese
-            ctx.fillRect(player.x + 9, player.y + 20, 17, 9); // Overleppe
-            ctx.fillRect(player.x + 9, player.y + 26, 6, 6);  // Venstre "tann"
-            ctx.fillRect(player.x + 20, player.y + 26, 6, 6); // Høyre "tann"
+            ctx.fillRect(player.x, player.y, player.width, player.height);
+            ctx.strokeRect(player.x, player.y, player.width, player.height);
+            
+            // Roterende kjerne
+            ctx.save();
+            ctx.translate(player.x + player.width/2, player.y + player.height/2);
+            ctx.rotate(Date.now() * 0.005);
+            ctx.fillStyle = `hsl(${(hue+180)%360}, 100%, 50%)`;
+            ctx.fillRect(-player.width/4, -player.height/4, player.width/2, player.height/2);
+            ctx.restore();
+        } 
+                else if (currentSkin === "pig") {
+            // Kropp (Rosa)
+            ctx.fillStyle = "#ffadad";
+            ctx.fillRect(player.x, player.y, player.width, player.height);
 
-        } else {
-            // Standard skin (grønn firkant)
+            // Tryne (Mørkere rosa)
+            ctx.fillStyle = "#ff85a2";
+            ctx.fillRect(player.x + 10, player.y + 18, 15, 10);
+            
+            // Nesebor
+            ctx.fillStyle = "#d44d7d";
+            ctx.fillRect(player.x + 12, player.y + 21, 3, 3);
+            ctx.fillRect(player.x + 20, player.y + 21, 3, 3);
+
+            // Øyne
+            ctx.fillStyle = "white";
+            ctx.fillRect(player.x + 6, player.y + 10, 6, 6);
+            ctx.fillRect(player.x + 23, player.y + 10, 6, 6);
+            ctx.fillStyle = "black";
+            ctx.fillRect(player.x + 8, player.y + 12, 3, 3);
+            ctx.fillRect(player.x + 25, player.y + 12, 3, 3);
+        }
+        else {
+            // Standard skin
             ctx.fillStyle = (boosters.armor && !player.armorUsed) ? '#4af' : '#0f0';
             ctx.fillRect(player.x, player.y, player.width, player.height);
         }
 
-        // Armor-effekt (blå glød rundt hvis du har skjold)
+        // Armor-effekt (blå ramme)
         if (boosters.armor && !player.armorUsed) {
             ctx.strokeStyle = "#4af";
-            ctx.lineWidth = 3;
-            ctx.strokeRect(player.x - 2, player.y - 2, player.width + 4, player.height + 4);
+            ctx.lineWidth = 2;
+            ctx.strokeRect(player.x - 3, player.y - 3, player.width + 6, player.height + 6);
         }
     }
 
     
-    bullets.forEach(b => { ctx.fillStyle = boosters.doubleDamage ? 'orange' : 'yellow'; ctx.fillRect(b.x, b.y, 6, 12); });
+        bullets.forEach(b => { 
+        if (rainbowTimer > 0) {
+            // Regnbuefarge som skifter raskt (0.8 styrer farten)
+            ctx.fillStyle = `hsl(${(Date.now() * 0.8) % 360}, 100%, 60%)`;
+        } else {
+            ctx.fillStyle = boosters.doubleDamage ? 'orange' : 'yellow'; 
+        }
+        ctx.fillRect(b.x, b.y, 6, 12); 
+    });
+
+    // Tegner selve den sjeldne boksen når den faller
+    powerups.forEach(p => {
+        ctx.fillStyle = `hsl(${(Date.now() * 0.5) % 360}, 100%, 50%)`;
+        ctx.shadowBlur = 15; // Gir boksen en hvit glød så den synes godt
+        ctx.shadowColor = "white";
+        ctx.fillRect(p.x, p.y, p.w, p.h);
+        ctx.strokeStyle = "white";
+        ctx.lineWidth = 2;
+        ctx.strokeRect(p.x, p.y, p.w, p.h);
+        ctx.shadowBlur = 0; // Skrur av gløden for resten av grafikken
+    });
     enemies.forEach(e => { 
         ctx.fillStyle = e.color; ctx.fillRect(e.x, e.y, e.w, e.h); 
         if (e.isHeavy) {
@@ -401,10 +564,10 @@ function draw() {
         ctx.fillStyle = "white";
         ctx.font = "bold 40px Arial";
         ctx.textAlign = "center";
-        ctx.fillText("PAUSE", 200, 300);
+        ctx.fillText("PAUSED", 200, 300);
         
         ctx.font = "16px Arial";
-        ctx.fillText("Press the pause button to continue", 200, 340);
+        ctx.fillText("", 200, 340);
         ctx.textAlign = "start"; // Nullstill tekstjustering for andre tekster
     }
 }
@@ -444,7 +607,7 @@ function togglePause() {
 }
 
 function restartGame() { init(); }
-function resetGameData() { if(confirm("Slette alt?")) { localStorage.clear(); location.reload(); } }
+function resetGameData() { if(confirm("Delete all data?")) { localStorage.clear(); location.reload(); } }
 
 init();
 let lastSpawnTime = 0;
@@ -466,7 +629,6 @@ function handleEnemySpawning(timestamp) {
     }
 }
 
-
 function loop(timestamp) {
     let deltaTime = timestamp - lastTime;
     lastTime = timestamp;
@@ -474,21 +636,9 @@ function loop(timestamp) {
     let speedFactor = deltaTime / 16.6;
 
     update(speedFactor);
-    draw();
-    requestAnimationFrame(loop);
-function loop(timestamp) {
-    let deltaTime = timestamp - lastTime;
-    lastTime = timestamp;
-    if (deltaTime > 100) deltaTime = 16.6; 
-    let speedFactor = deltaTime / 16.6;
-
-    update(speedFactor);
-    // LEGG TIL DENNE LINJEN HER:
     handleEnemySpawning(timestamp); 
-    
     draw();
     requestAnimationFrame(loop);
-}
 }
 requestAnimationFrame(loop);
 </script>
