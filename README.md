@@ -1,37 +1,34 @@
 <html lang="no">
 <head>
-<meta charset="UTF-8">
-<title>Space Station - Destruction Edition</title>
-<style>
-    body { margin:0; background:black; color:white; display:flex; justify-content:center; align-items:center; height:100vh; font-family:Arial; overflow:hidden; touch-action: none; }
-    canvas { background:#05080f; border:2px solid #4af; max-width: 100vw; max-height: 100vh; cursor: crosshair; }
-    .ui { position:absolute; top:10px; right:10px; display:flex; flex-direction:column; gap:5px; z-index:10; width: 195px; background: rgba(0,0,0,0.85); padding: 10px; border-radius: 8px; border: 1px solid #4af; max-height: 90vh; overflow-y: auto; }
-    /* Ny klasse for venstremenyen */
-.ui-left { 
-    position: absolute; 
-    top: 10px; 
-    left: 10px; 
-    display: flex; 
-    flex-direction: column; 
-    gap: 5px; 
-    z-index: 10; 
-    width: 160px; 
-    background: rgba(0,0,0,0.85); 
-    padding: 10px; 
-    border-radius: 8px; 
-    border: 1px solid #4af; 
-}
-    button { padding:8px; font-size:11px; cursor:pointer; background: #222; color: white; border: 1px solid #4af; border-radius: 4px; width: 100%; margin-bottom: 2px; }
-    button:active { background: #4af; }
-    button.active-wpn { background: #004400; border-color: #0f0; color: #0f0; }
-    button:disabled { opacity: 0.3; cursor: not-allowed; }
-    #shop { margin-top: 10px; border-top: 1px solid #4af; padding-top: 10px; }
-    .section-title { font-size: 10px; color: #4af; font-weight: bold; text-transform: uppercase; margin-bottom: 5px; display: block; }
-    #stats { font-size: 13px; margin-bottom: 5px; line-height: 1.4; }
-    .reset-btn { border-color: #f44; color: #f44; margin-top: 10px; font-size: 9px; }
-    .hidden { display: none !important; }
-    .wpn-group { margin-bottom: 10px; padding: 5px; border-radius: 4px; background: rgba(255,255,255,0.05); }
-</style>
+    <meta charset="UTF-8">
+    <title>Space Station - Destruction Edition</title>
+    
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="mobile-web-app-capable" content="yes">
+    
+    <link rel="apple-touch-icon" href="icon.png">
+    
+    <link rel="icon" type="image/png" href="icon.png">
+    <link rel="manifest" href="manifest.json">
+
+    <style>
+        body { margin:0; background:black; color:white; display:flex; justify-content:center; align-items:center; height:100vh; font-family:Arial; overflow:hidden; touch-action: none; }
+        canvas { background:#05080f; border:2px solid #4af; max-width: 100vw; max-height: 100vh; cursor: crosshair; }
+        .ui { position:absolute; top:10px; right:10px; display:flex; flex-direction:column; gap:5px; z-index:10; width: 195px; background: rgba(0,0,0,0.85); padding: 10px; border-radius: 8px; border: 1px solid #4af; max-height: 90vh; overflow-y: auto; }
+        .ui-left { position: absolute; top: 10px; left: 10px; display: flex; flex-direction: column; gap: 5px; z-index: 10; width: 160px; background: rgba(0,0,0,0.85); padding: 10px; border-radius: 8px; border: 1px solid #4af; }
+        button { padding:8px; font-size:11px; cursor:pointer; background: #222; color: white; border: 1px solid #4af; border-radius: 4px; width: 100%; margin-bottom: 2px; }
+        button:active { background: #4af; }
+        button.active-wpn { background: #004400; border-color: #0f0; color: #0f0; }
+        button:disabled { opacity: 0.3; cursor: not-allowed; }
+        #shop { margin-top: 10px; border-top: 1px solid #4af; padding-top: 10px; }
+        .section-title { font-size: 10px; color: #4af; font-weight: bold; text-transform: uppercase; margin-bottom: 5px; display: block; }
+        #stats { font-size: 13px; margin-bottom: 5px; line-height: 1.4; }
+        .reset-btn { border-color: #f44; color: #f44; margin-top: 10px; font-size: 9px; }
+        .hidden { display: none !important; }
+        .wpn-group { margin-bottom: 10px; padding: 5px; border-radius: 4px; background: rgba(255,255,255,0.05); }
+    </style>
 </head>
 <body>
 
@@ -612,15 +609,17 @@ function resetGameData() { if(confirm("Delete all data?")) { localStorage.clear(
 init();
 let lastSpawnTime = 0;
 function handleEnemySpawning(timestamp) {
-    // Grunnhastighet er 600ms. Vi trekker fra tid basert på score.
-    // Jo høyere score, jo kortere tid mellom hver spawn.
-    let spawnDelay = Math.max(150, 600 - (Math.floor(score / 10000) * 100));
+    // Øker tiden mellom hver vanlige spawn litt mer gradvis
+    let spawnDelay = Math.max(200, 600 - (Math.floor(score / 15000) * 50));
 
     if (timestamp - lastSpawnTime > spawnDelay) {
         spawnEnemy();
         
-        // Bonus-spawns: Per 10 000 poeng spawner vi 2 ekstra fiender
-        let extraEnemies = Math.floor(score / 10000) * 2;
+        // NY LOGIKK: Spawner færre ekstra fiender. 
+        // Her spawner vi 1 ekstra fiende per 20 000 poeng, 
+        // og vi setter en maksgrense på 3 ekstra fiender samtidig.
+        let extraEnemies = Math.min(5, Math.floor(score / 20000)); 
+        
         for (let i = 0; i < extraEnemies; i++) {
             spawnEnemy();
         }
